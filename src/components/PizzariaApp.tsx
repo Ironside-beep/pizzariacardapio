@@ -1,10 +1,9 @@
-import { useState } from "react";  
-import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ThemeToggle } from "./ThemeToggle";
 import { DeliveryAlert } from "./DeliveryAlert";
 import { Cart } from "./Cart";
 import { MenuSection } from "./MenuSection";
@@ -17,9 +16,10 @@ export function PizzariaApp() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // estado de busca
-  const [cartBtnPos, setCartBtnPos] = useState({ x: 20, y: 20 }); // posição inicial do botão movível
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cartBtnPos, setCartBtnPos] = useState({ x: 20, y: 20 });
   const [dragging, setDragging] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cart = useCart();
 
   const openInstagram = () => {
@@ -35,7 +35,7 @@ export function PizzariaApp() {
   const scrollToSection = (sectionId: string) => {
     setActiveTab("menu");
     setActiveSection(sectionId);
-    
+
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
@@ -48,7 +48,7 @@ export function PizzariaApp() {
     const now = new Date();
     const hour = now.getHours();
     const day = now.getDay();
-    
+
     if (day >= 1 && day <= 4) {
       return hour >= 18 && hour < 24;
     } else if (day === 5 || day === 6) {
@@ -58,87 +58,101 @@ export function PizzariaApp() {
     }
   };
 
-  // Função de filtro de produtos
   const filterItems = (items: typeof pizzasSalgadas) =>
     items.filter((item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-  // Funções para arrastar o botão
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setDragging(true);
-  };
-
+  const handleMouseDown = () => setDragging(true);
   const handleMouseMove = (e: React.MouseEvent) => {
     if (dragging) {
-      setCartBtnPos({ x: e.clientX - 30, y: e.clientY - 30 }); // ajusta centro do botão
+      setCartBtnPos({ x: e.clientX - 30, y: e.clientY - 30 });
     }
   };
-
-  const handleMouseUp = () => {
-    setDragging(false);
-  };
+  const handleMouseUp = () => setDragging(false);
 
   const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <DeliveryAlert />
-      
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Logo */}
-              <img 
-                src="/logo.jpg" 
-                alt="Logo Pizzaria Alcapone" 
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              
-              {/* Nome com cores e fontes diferentes */}
-              <div className="text-2xl font-bold flex gap-1 items-center">
-                <span className="font-sans text-gray-200">Pizzaria</span>
-                <span className="font-serif text-pink-500">Alcapone</span>
-              </div>
 
-              {/* Badge ABERTO/FECHADO - agora aparece em celular */}
-              <Badge 
-                className={`px-2 py-1 rounded ${isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}
-              >
-                <Clock className="h-3 w-3 mr-1" />
-                {isOpen() ? "ABERTO" : "FECHADO"}
-              </Badge>
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-gray-900 border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img
+              src="/logo.jpg"
+              alt="Logo Pizzaria Alcapone"
+              className="h-10 w-10 rounded-full object-cover"
+            />
+
+            <div className="text-2xl font-bold flex gap-1 items-center">
+              <span className="font-sans text-gray-200">Pizzaria</span>
+              <span className="font-serif text-pink-500">Alcapone</span>
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={openInstagram}>
-                <Instagram className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={openMaps}>
-                <MapPin className="h-5 w-5" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setCartOpen(true)}
-                className="relative"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                {cart.items.length > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    {cart.items.reduce((sum, item) => sum + item.quantity, 0)}
-                  </Badge>
-                )}
-              </Button>
-              <ThemeToggle />
-            </div>
+
+            <Badge
+              className={`px-2 py-1 rounded ${isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}
+            >
+              <Clock className="h-3 w-3 mr-1" />
+              {isOpen() ? "ABERTO" : "FECHADO"}
+            </Badge>
+          </div>
+
+          {/* Desktop buttons */}
+          <div className="hidden md:flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={openInstagram}>
+              <Instagram className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={openMaps}>
+              <MapPin className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCartOpen(true)}
+              className="relative"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cart.items.length > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
+          {/* Mobile menu */}
+          <div className="md:hidden">
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              <Menu className="h-6 w-6" />
+            </Button>
           </div>
         </div>
+
+        {/* Dropdown mobile */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-gray-800 px-4 py-2 space-y-2">
+            <Button variant="ghost" className="w-full justify-start" onClick={openInstagram}>
+              <Instagram className="h-5 w-5 mr-2" /> Instagram
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" onClick={openMaps}>
+              <MapPin className="h-5 w-5 mr-2" /> Como Chegar
+            </Button>
+            <Button variant="ghost" className="w-full justify-start relative" onClick={() => setCartOpen(true)}>
+              <ShoppingCart className="h-5 w-5 mr-2" /> Carrinho
+              {cartCount > 0 && (
+                <Badge className="absolute right-4 top-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        )}
       </header>
 
-      {/* Campo de busca (aparece apenas em Cardápio) */}
+      {/* Campo de busca */}
       {activeTab === "menu" && (
         <div className="container mx-auto px-4 py-4">
           <input
@@ -151,17 +165,13 @@ export function PizzariaApp() {
         </div>
       )}
 
-      {/* Hero Section */}
+      {/* Hero */}
       {activeTab === "home" && (
         <section className="relative py-20 px-4 bg-gray-800 text-white text-center">
           <div className="container mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 font-display">
-              PIZZARIA ALCAPONE
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">
-              A melhor pizza da região! 🍕
-            </p>
-            
+            <h1 className="text-4xl md:text-6xl font-bold mb-6">PIZZARIA ALCAPONE</h1>
+            <p className="text-xl md:text-2xl mb-8 opacity-90">A melhor pizza da região! 🍕</p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button variant="hero" size="xl" onClick={() => setActiveTab("menu")}>
                 Ver Cardápio
@@ -170,13 +180,17 @@ export function PizzariaApp() {
                 <Instagram className="h-5 w-5 mr-2" />
                 Siga-nos
               </Button>
-              <Button variant="outline" size="xl" onClick={openMaps} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+              <Button
+                variant="outline"
+                size="xl"
+                onClick={openMaps}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
                 <MapPin className="h-5 w-5 mr-2" />
                 Como Chegar
               </Button>
             </div>
 
-            {/* Horários */}
             <Card className="max-w-md mx-auto bg-white/10 border-white/20 text-white">
               <CardHeader className="text-center">
                 <CardTitle className="flex items-center justify-center gap-2">
@@ -194,7 +208,7 @@ export function PizzariaApp() {
       )}
 
       {/* Navigation */}
-      <nav className="sticky top-[73px] z-30 bg-background border-b">
+      <nav className="sticky top-[73px] z-30 bg-gray-900 border-b">
         <div className="container mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto">
             <Button
@@ -204,7 +218,7 @@ export function PizzariaApp() {
             >
               Início
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -215,114 +229,68 @@ export function PizzariaApp() {
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="start" 
-                className="w-56 bg-background border shadow-lg z-50"
-              >
-                <DropdownMenuItem onClick={() => scrollToSection("pizzas-salgadas")}>
-                  🍕 Pizzas Salgadas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("pizzas-doces")}>
-                  🍰 Pizzas Doces
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("esfihas-salgadas")}>
-                  🥟 Esfihas Salgadas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("esfihas-doces")}>
-                  🧁 Esfihas Doces
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("bebidas")}>
-                  🥤 Bebidas
-                </DropdownMenuItem>
+              <DropdownMenuContent align="start" className="w-56 bg-background border shadow-lg z-50">
+                <DropdownMenuItem onClick={() => scrollToSection("pizzas-salgadas")}>🍕 Pizzas Salgadas</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("pizzas-doces")}>🍰 Pizzas Doces</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("esfihas-salgadas")}>🥟 Esfihas Salgadas</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("esfihas-doces")}>🧁 Esfihas Doces</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("bebidas")}>🥤 Bebidas</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </nav>
 
-      {/* Content */}
+      {/* Conteúdo */}
       <main className="container mx-auto px-4 py-8">
         {activeTab === "menu" && (
           <div className="space-y-8">
             <div id="pizzas-salgadas">
-              <MenuSection
-                title="🍕 Pizzas Salgadas"
-                items={filterItems(pizzasSalgadas)}
-                category="pizza-salgada"
-                onAddToCart={cart.addItem}
-                hasSizes
-              />
+              <MenuSection title="🍕 Pizzas Salgadas" items={filterItems(pizzasSalgadas)} category="pizza-salgada" onAddToCart={cart.addItem} hasSizes />
             </div>
             <div id="pizzas-doces">
-              <MenuSection
-                title="🍰 Pizzas Doces"
-                items={filterItems(pizzasDoces)}
-                category="pizza-doce"
-                onAddToCart={cart.addItem}
-                hasSizes
-              />
+              <MenuSection title="🍰 Pizzas Doces" items={filterItems(pizzasDoces)} category="pizza-doce" onAddToCart={cart.addItem} hasSizes />
             </div>
             <div id="esfihas-salgadas">
-              <MenuSection
-                title="🥟 Esfihas Salgadas"
-                items={filterItems(esfihasSalgadas)}
-                category="esfiha-salgada"
-                onAddToCart={cart.addItem}
-              />
+              <MenuSection title="🥟 Esfihas Salgadas" items={filterItems(esfihasSalgadas)} category="esfiha-salgada" onAddToCart={cart.addItem} />
             </div>
             <div id="esfihas-doces">
-              <MenuSection
-                title="🧁 Esfihas Doces"
-                items={filterItems(esfihasDoces)}
-                category="esfiha-doce"
-                onAddToCart={cart.addItem}
-              />
+              <MenuSection title="🧁 Esfihas Doces" items={filterItems(esfihasDoces)} category="esfiha-doce" onAddToCart={cart.addItem} />
             </div>
             <div id="bebidas">
-              <MenuSection
-                title="🥤 Bebidas"
-                items={filterItems(bebidas)}
-                category="bebida"
-                onAddToCart={cart.addItem}
-              />
+              <MenuSection title="🥤 Bebidas" items={filterItems(bebidas)} category="bebida" onAddToCart={cart.addItem} />
             </div>
           </div>
         )}
       </main>
 
       {/* Floating Buttons */}
-
-      {/* Botão do Carrinho movível */}
       <Button
         variant="floating"
         onClick={() => setCartOpen(true)}
         size="pizza"
         className="relative"
         style={{
-          position: 'fixed',
+          position: "fixed",
           left: cartBtnPos.x,
           top: cartBtnPos.y,
           zIndex: 50,
-          cursor: 'grab'
+          cursor: "grab"
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         aria-label="Abrir carrinho"
       >
-        {/* ícone da pizza */}
         <span className="text-xl">🍕</span>
-
-        {/* Badge de notificação (bolinha vermelha com a quantidade) */}
         {cartCount > 0 && (
           <span className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
             {cartCount}
           </span>
         )}
       </Button>
-      
-      {/* Botão de Promoções */}
-      <Button 
+
+      <Button
         onClick={() => setPromoOpen(true)}
         className="fixed bottom-6 left-6 z-50 bg-green-500 text-white hover:bg-green-600"
         size="lg"
@@ -332,17 +300,8 @@ export function PizzariaApp() {
       </Button>
 
       {/* Modals */}
-      <Cart 
-        open={cartOpen}
-        onOpenChange={setCartOpen}
-        cart={cart}
-      />
-      
-      <PromoModal
-        open={promoOpen}
-        onOpenChange={setPromoOpen}
-        onAddToCart={cart.addItem}
-      />
+      <Cart open={cartOpen} onOpenChange={setCartOpen} cart={cart} />
+      <PromoModal open={promoOpen} onOpenChange={setPromoOpen} onAddToCart={cart.addItem} />
     </div>
   );
 }
