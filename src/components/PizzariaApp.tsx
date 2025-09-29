@@ -24,10 +24,8 @@ export function PizzariaApp() {
   const btnRef = useRef<HTMLElement | null>(null);
   const movedRef = useRef(false);
   const mountedRef = useRef(false);
-
-  // nova ref para posição inicial do ponteiro (usada para threshold)
   const pointerDownPosRef = useRef({ x: 0, y: 0 });
-
+  const posRef = useRef(cartBtnPos);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cart = useCart();
 
@@ -46,9 +44,7 @@ export function PizzariaApp() {
     setActiveSection(sectionId);
     setTimeout(() => {
       const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   };
 
@@ -56,13 +52,9 @@ export function PizzariaApp() {
     const now = new Date();
     const hour = now.getHours();
     const day = now.getDay();
-    if (day >= 1 && day <= 4) {
-      return hour >= 18 && hour < 24;
-    } else if (day === 5 || day === 6) {
-      return hour >= 18 || hour < 1;
-    } else {
-      return hour >= 18 && hour < 24;
-    }
+    if (day >= 1 && day <= 4) return hour >= 18 && hour < 24;
+    if (day === 5 || day === 6) return hour >= 18 || hour < 1;
+    return hour >= 18 && hour < 24;
   };
 
   const filterItems = (items: typeof pizzasSalgadas) =>
@@ -75,88 +67,54 @@ export function PizzariaApp() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (typeof parsed.left === "number" && typeof parsed.top === "number") {
-          setCartBtnPos({ left: parsed.left, top: parsed.top });
+          setCartBtnPos(parsed);
           return;
         }
       }
     } catch {}
     if (typeof window !== "undefined") {
-      const defaultLeft = Math.max(20, window.innerWidth - 80);
-      const defaultTop = Math.max(20, window.innerHeight - 140);
-      setCartBtnPos({ left: defaultLeft, top: defaultTop });
+      setCartBtnPos({ left: Math.max(20, window.innerWidth - 80), top: Math.max(20, window.innerHeight - 140) });
     }
   }, []);
 
-  const posRef = useRef(cartBtnPos);
   useEffect(() => {
     posRef.current = cartBtnPos;
   }, [cartBtnPos]);
 
+  // Drag global listeners
   useEffect(() => {
-    const DRAG_THRESHOLD = 8; // pixels — ajuste se quiser menor/maior
+    const DRAG_THRESHOLD = 8;
 
     const onPointerMove = (e: PointerEvent) => {
-      // se não está em ponteiro down, ignora
-      if (!draggingRef.current) return;
-
-      // só responde ao pointerId que iniciou o drag
-      if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
-
-      // calcula deslocamento desde o pointerdown inicial
+      if (!draggingRef.current || (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current)) return;
       const dx = e.clientX - pointerDownPosRef.current.x;
       const dy = e.clientY - pointerDownPosRef.current.y;
       const dist = Math.hypot(dx, dy);
+      if (!movedRef.current && dist > DRAG_THRESHOLD) movedRef.current = true;
 
-      // só marca moved se ultrapassar o threshold
-      if (!movedRef.current && dist > DRAG_THRESHOLD) {
-        movedRef.current = true;
-      }
-
-      // se já ultrapassou o threshold, atualiza posição (arrastar)
       if (movedRef.current) {
-        const x = e.clientX - offsetRef.current.x;
-        const y = e.clientY - offsetRef.current.y;
         const w = btnRef.current?.offsetWidth ?? 64;
         const h = btnRef.current?.offsetHeight ?? 64;
-        // limita dentro da viewport
-        const left = Math.min(Math.max(0, Math.round(x)), Math.max(0, window.innerWidth - w));
-        const top = Math.min(Math.max(0, Math.round(y)), Math.max(0, window.innerHeight - h));
-        setCartBtnPos({ left, top });
+        const left = Math.min(Math.max(0, Math.round(e.clientX - offsetRef.current.x)), window.innerWidth - w);
+        const top = Math.min(Math.max(0, Math.round(e.clientY - offsetRef.current.y)), window.innerHeight - h);
+        if (btnRef.current) {
+          btnRef.current.style.left = `${left}px`;
+          btnRef.current.style.top = `${top}px`;
+        }
+        posRef.current = { left, top };
       }
     };
 
     const onPointerUp = (e: PointerEvent) => {
-      // somente procede se estivermos arrastando com o mesmo pointerId
-      if (!draggingRef.current) return;
-      if (pointerIdRef.current !== null && e && e.pointerId !== undefined && e.pointerId !== pointerIdRef.current) {
-        // se não for o mesmo pointer, ignora
-        return;
-      }
-
+      if (!draggingRef.current || (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current)) return;
       draggingRef.current = false;
-
-      // tenta liberar pointer capture no botão (se suportado)
-      try {
-        if (pointerIdRef.current !== null && btnRef.current && (btnRef.current as any).releasePointerCapture) {
-          try {
-            (btnRef.current as any).releasePointerCapture(pointerIdRef.current);
-          } catch {}
-        }
-      } catch {}
-
       pointerIdRef.current = null;
-      try {
-        localStorage.setItem("floatingCartPos", JSON.stringify(posRef.current));
-      } catch {}
-      // reseta movedRef após short timeout para permitir clicks futuros
-      setTimeout(() => {
-        movedRef.current = false;
-      }, 0);
+      setCartBtnPos(posRef.current);
+      try { localStorage.setItem("floatingCartPos", JSON.stringify(posRef.current)); } catch {}
+      setTimeout(() => { movedRef.current = false; }, 0);
     };
 
-    const onPointerCancel = (e: PointerEvent) => {
-      // reset internal state on cancel
-      if (!draggingRef.current) return;
+    const onPointerCancel = () => {
       draggingRef.current = false;
       pointerIdRef.current = null;
       movedRef.current = false;
@@ -165,7 +123,6 @@ export function PizzariaApp() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerCancel);
-
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
@@ -174,38 +131,17 @@ export function PizzariaApp() {
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    const target = e.currentTarget as Element;
-    try {
-      // capture apenas se suportado
-      (target as Element).setPointerCapture?.(e.pointerId);
-    } catch {}
     pointerIdRef.current = e.pointerId;
-    // registramos o ponto inicial do ponteiro para o threshold
-    pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
     draggingRef.current = true;
-    movedRef.current = false; // reset aqui — só vai virar true se ultrapassar threshold
-
-    // usa o btnRef se disponível para cálculo de offset
-    try {
-      const rect = (btnRef.current ?? e.currentTarget).getBoundingClientRect();
-      offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    } catch {
-      const rect = (e.currentTarget as Element).getBoundingClientRect();
-      offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    }
-
-    // OBS: não chamamos e.preventDefault() aqui para manter compatibilidade de clique em alguns browsers
+    movedRef.current = false;
+    pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
+    const rect = (btnRef.current ?? e.currentTarget).getBoundingClientRect();
+    offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    try { (e.currentTarget as Element).setPointerCapture?.(e.pointerId); } catch {}
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    // se houve arraste (movimento acima do threshold), bloqueia o click
-    if (movedRef.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      // garante que movedRef volte a false (após o pointerup o timeout já faz, mas reforça)
-      movedRef.current = false;
-      return;
-    }
+    if (movedRef.current) { e.preventDefault(); e.stopPropagation(); return; }
     setCartOpen(true);
   };
 
@@ -219,11 +155,7 @@ export function PizzariaApp() {
       <header className="sticky top-0 z-40 bg-gray-900 border-b">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img
-              src="/logo.jpg"
-              alt="Logo Pizzaria Alcapone"
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            <img src="/logo.jpg" alt="Logo Pizzaria Alcapone" className="h-10 w-10 rounded-full object-cover" />
             <div className="text-2xl font-bold flex gap-1 items-center">
               <span className="font-sans text-gray-200">Pizzaria</span>
               <span className="font-serif text-pink-500">Alcapone</span>
@@ -231,24 +163,11 @@ export function PizzariaApp() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={openInstagram}>
-              <Instagram className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={openMaps}>
-              <MapPin className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCartOpen(true)}
-              className="relative"
-            >
+            <Button variant="ghost" size="icon" onClick={openInstagram}><Instagram className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={openMaps}><MapPin className="h-5 w-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)} className="relative">
               <ShoppingCart className="h-5 w-5" />
-              {cart.items.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  {cartCount}
-                </Badge>
-              )}
+              {cartCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">{cartCount}</Badge>}
             </Button>
           </div>
 
@@ -269,25 +188,16 @@ export function PizzariaApp() {
             </Button>
             <Button variant="ghost" className="w-full justify-start relative" onClick={() => setCartOpen(true)}>
               <ShoppingCart className="h-5 w-5 mr-2" /> Carrinho
-              {cartCount > 0 && (
-                <Badge className="absolute right-4 top-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  {cartCount}
-                </Badge>
-              )}
+              {cartCount > 0 && <Badge className="absolute right-4 top-2 h-5 w-5 flex items-center justify-center p-0 text-xs">{cartCount}</Badge>}
             </Button>
           </div>
         )}
       </header>
 
-      {/* Badge Aberto/Fechado abaixo do header */}
+      {/* Badge Aberto/Fechado */}
       <div className="bg-gray-800 py-2 text-center border-b border-gray-700">
-        <Badge
-          className={`px-3 py-2 rounded text-sm ${
-            isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"
-          }`}
-        >
-          <Clock className="h-4 w-4 mr-2 inline" />
-          {isOpen() ? "ABERTO" : "FECHADO"}
+        <Badge className={`px-3 py-2 rounded text-sm ${isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
+          <Clock className="h-4 w-4 mr-2 inline" />{isOpen() ? "ABERTO" : "FECHADO"}
         </Badge>
       </div>
 
@@ -311,29 +221,13 @@ export function PizzariaApp() {
             <h1 className="text-4xl md:text-6xl font-bold mb-6">PIZZARIA ALCAPONE</h1>
             <p className="text-xl md:text-2xl mb-8 opacity-90">A melhor pizza da região! 🍕</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button variant="hero" size="xl" onClick={() => setActiveTab("menu")}>
-                Ver Cardápio
-              </Button>
-              <Button variant="secondary" size="xl" onClick={openInstagram}>
-                <Instagram className="h-5 w-5 mr-2" />
-                Siga-nos
-              </Button>
-              <Button
-                variant="outline"
-                size="xl"
-                onClick={openMaps}
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-              >
-                <MapPin className="h-5 w-5 mr-2" />
-                Como Chegar
-              </Button>
+              <Button variant="hero" size="xl" onClick={() => setActiveTab("menu")}>Ver Cardápio</Button>
+              <Button variant="secondary" size="xl" onClick={openInstagram}><Instagram className="h-5 w-5 mr-2" />Siga-nos</Button>
+              <Button variant="outline" size="xl" onClick={openMaps} className="bg-white/10 border-white/30 text-white hover:bg-white/20"><MapPin className="h-5 w-5 mr-2" />Como Chegar</Button>
             </div>
             <Card className="max-w-md mx-auto bg-white/10 border-white/20 text-white">
               <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Horários de Funcionamento
-                </CardTitle>
+                <CardTitle className="flex items-center justify-center gap-2"><Clock className="h-5 w-5" />Horários de Funcionamento</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-center">
                 <p><strong>Dom a Quinta:</strong> 18:00 às 23:45</p>
@@ -348,20 +242,10 @@ export function PizzariaApp() {
       <nav className="sticky top-[73px] z-30 bg-gray-900 border-b">
         <div className="container mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto">
-            <Button
-              variant={activeTab === "home" ? "default" : "ghost"}
-              onClick={() => setActiveTab("home")}
-              className="whitespace-nowrap"
-            >
-              Início
-            </Button>
-
+            <Button variant={activeTab === "home" ? "default" : "ghost"} onClick={() => setActiveTab("home")} className="whitespace-nowrap">Início</Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant={activeTab === "menu" ? "default" : "ghost"}
-                  className="whitespace-nowrap gap-1"
-                >
+                <Button variant={activeTab === "menu" ? "default" : "ghost"} className="whitespace-nowrap gap-1">
                   Cardápio
                   <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -382,21 +266,11 @@ export function PizzariaApp() {
       <main className="container mx-auto px-4 py-8">
         {activeTab === "menu" && (
           <div className="space-y-8">
-            <div id="pizzas-salgadas">
-              <MenuSection title="🍕 Pizzas Salgadas" items={filterItems(pizzasSalgadas)} category="pizza-salgada" onAddToCart={cart.addItem} hasSizes />
-            </div>
-            <div id="pizzas-doces">
-              <MenuSection title="🍰 Pizzas Doces" items={filterItems(pizzasDoces)} category="pizza-doce" onAddToCart={cart.addItem} hasSizes />
-            </div>
-            <div id="esfihas-salgadas">
-              <MenuSection title="🥟 Esfihas Salgadas" items={filterItems(esfihasSalgadas)} category="esfiha-salgada" onAddToCart={cart.addItem} />
-            </div>
-            <div id="esfihas-doces">
-              <MenuSection title="🧁 Esfihas Doces" items={filterItems(esfihasDoces)} category="esfiha-doce" onAddToCart={cart.addItem} />
-            </div>
-            <div id="bebidas">
-              <MenuSection title="🥤 Bebidas" items={filterItems(bebidas)} category="bebida" onAddToCart={cart.addItem} />
-            </div>
+            <div id="pizzas-salgadas"><MenuSection title="🍕 Pizzas Salgadas" items={filterItems(pizzasSalgadas)} category="pizza-salgada" onAddToCart={cart.addItem} hasSizes /></div>
+            <div id="pizzas-doces"><MenuSection title="🍰 Pizzas Doces" items={filterItems(pizzasDoces)} category="pizza-doce" onAddToCart={cart.addItem} hasSizes /></div>
+            <div id="esfihas-salgadas"><MenuSection title="🥟 Esfihas Salgadas" items={filterItems(esfihasSalgadas)} category="esfiha-salgada" onAddToCart={cart.addItem} /></div>
+            <div id="esfihas-doces"><MenuSection title="🧁 Esfihas Doces" items={filterItems(esfihasDoces)} category="esfiha-doce" onAddToCart={cart.addItem} /></div>
+            <div id="bebidas"><MenuSection title="🥤 Bebidas" items={filterItems(bebidas)} category="bebida" onAddToCart={cart.addItem} /></div>
           </div>
         )}
       </main>
@@ -413,7 +287,7 @@ export function PizzariaApp() {
           top: cartBtnPos.top,
           zIndex: 50,
           cursor: draggingRef.current ? "grabbing" : "grab",
-          touchAction: "manipulation", // alterado para manipulação (melhor toque mobile)
+          touchAction: "none", // crítico para drag no mobile
         }}
         onPointerDown={(e) => {
           btnRef.current = e.currentTarget as unknown as HTMLElement;
