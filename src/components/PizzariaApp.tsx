@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react"; 
 import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,6 +99,9 @@ export function PizzariaApp() {
       // se não está em ponteiro down, ignora
       if (!draggingRef.current) return;
 
+      // só responde ao pointerId que iniciou o drag
+      if (pointerIdRef.current !== null && e.pointerId !== pointerIdRef.current) return;
+
       // calcula deslocamento desde o pointerdown inicial
       const dx = e.clientX - pointerDownPosRef.current.x;
       const dy = e.clientY - pointerDownPosRef.current.y;
@@ -113,17 +116,34 @@ export function PizzariaApp() {
       if (movedRef.current) {
         const x = e.clientX - offsetRef.current.x;
         const y = e.clientY - offsetRef.current.y;
-        const w = btnRef.current?.offsetWidth ?? 60;
-        const h = btnRef.current?.offsetHeight ?? 60;
-        const left = Math.min(Math.max(0, x), window.innerWidth - w);
-        const top = Math.min(Math.max(0, y), window.innerHeight - h);
+        const w = btnRef.current?.offsetWidth ?? 64;
+        const h = btnRef.current?.offsetHeight ?? 64;
+        // limita dentro da viewport
+        const left = Math.min(Math.max(0, Math.round(x)), Math.max(0, window.innerWidth - w));
+        const top = Math.min(Math.max(0, Math.round(y)), Math.max(0, window.innerHeight - h));
         setCartBtnPos({ left, top });
       }
     };
 
-    const onPointerUp = () => {
+    const onPointerUp = (e: PointerEvent) => {
+      // somente procede se estivermos arrastando com o mesmo pointerId
       if (!draggingRef.current) return;
+      if (pointerIdRef.current !== null && e && e.pointerId !== undefined && e.pointerId !== pointerIdRef.current) {
+        // se não for o mesmo pointer, ignora
+        return;
+      }
+
       draggingRef.current = false;
+
+      // tenta liberar pointer capture no botão (se suportado)
+      try {
+        if (pointerIdRef.current !== null && btnRef.current && (btnRef.current as any).releasePointerCapture) {
+          try {
+            (btnRef.current as any).releasePointerCapture(pointerIdRef.current);
+          } catch {}
+        }
+      } catch {}
+
       pointerIdRef.current = null;
       try {
         localStorage.setItem("floatingCartPos", JSON.stringify(posRef.current));
@@ -134,18 +154,29 @@ export function PizzariaApp() {
       }, 0);
     };
 
+    const onPointerCancel = (e: PointerEvent) => {
+      // reset internal state on cancel
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      pointerIdRef.current = null;
+      movedRef.current = false;
+    };
+
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerCancel);
 
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerCancel);
     };
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.currentTarget as Element;
     try {
+      // capture apenas se suportado
       (target as Element).setPointerCapture?.(e.pointerId);
     } catch {}
     pointerIdRef.current = e.pointerId;
@@ -153,9 +184,17 @@ export function PizzariaApp() {
     pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
     draggingRef.current = true;
     movedRef.current = false; // reset aqui — só vai virar true se ultrapassar threshold
-    const rect = (e.currentTarget as Element).getBoundingClientRect();
-    offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    // OBS: removi e.preventDefault() para não bloquear o click em alguns navegadores móveis
+
+    // usa o btnRef se disponível para cálculo de offset
+    try {
+      const rect = (btnRef.current ?? e.currentTarget).getBoundingClientRect();
+      offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    } catch {
+      const rect = (e.currentTarget as Element).getBoundingClientRect();
+      offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    // OBS: não chamamos e.preventDefault() aqui para manter compatibilidade de clique em alguns browsers
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -163,6 +202,8 @@ export function PizzariaApp() {
     if (movedRef.current) {
       e.preventDefault();
       e.stopPropagation();
+      // garante que movedRef volte a false (após o pointerup o timeout já faz, mas reforça)
+      movedRef.current = false;
       return;
     }
     setCartOpen(true);
