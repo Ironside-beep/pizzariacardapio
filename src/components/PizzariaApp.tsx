@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,14 @@ export function PizzariaApp() {
   const [cartOpen, setCartOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [cartBtnPos, setCartBtnPos] = useState({ x: 20, y: 20 });
-  const [dragging, setDragging] = useState(false);
+  const [cartBtnPos, setCartBtnPos] = useState({ left: 20, top: 20 });
+  const draggingRef = useRef(false);
+  const pointerIdRef = useRef<number | null>(null);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  const btnRef = useRef<HTMLElement | null>(null);
+  const movedRef = useRef(false);
+  const mountedRef = useRef(false);
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cart = useCart();
 
@@ -35,7 +41,6 @@ export function PizzariaApp() {
   const scrollToSection = (sectionId: string) => {
     setActiveTab("menu");
     setActiveSection(sectionId);
-
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
@@ -48,7 +53,6 @@ export function PizzariaApp() {
     const now = new Date();
     const hour = now.getHours();
     const day = now.getDay();
-
     if (day >= 1 && day <= 4) {
       return hour >= 18 && hour < 24;
     } else if (day === 5 || day === 6) {
@@ -59,17 +63,87 @@ export function PizzariaApp() {
   };
 
   const filterItems = (items: typeof pizzasSalgadas) =>
-    items.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    items.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const handleMouseDown = () => setDragging(true);
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (dragging) {
-      setCartBtnPos({ x: e.clientX - 30, y: e.clientY - 30 });
+  useEffect(() => {
+    mountedRef.current = true;
+    try {
+      const raw = localStorage.getItem("floatingCartPos");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.left === "number" && typeof parsed.top === "number") {
+          setCartBtnPos({ left: parsed.left, top: parsed.top });
+          return;
+        }
+      }
+    } catch {}
+    if (typeof window !== "undefined") {
+      const defaultLeft = Math.max(20, window.innerWidth - 80);
+      const defaultTop = Math.max(20, window.innerHeight - 140);
+      setCartBtnPos({ left: defaultLeft, top: defaultTop });
     }
+  }, []);
+
+  const posRef = useRef(cartBtnPos);
+  useEffect(() => {
+    posRef.current = cartBtnPos;
+  }, [cartBtnPos]);
+
+  useEffect(() => {
+    const onPointerMove = (e: PointerEvent) => {
+      if (!draggingRef.current) return;
+      movedRef.current = true;
+      const x = e.clientX - offsetRef.current.x;
+      const y = e.clientY - offsetRef.current.y;
+      const w = btnRef.current?.offsetWidth ?? 60;
+      const h = btnRef.current?.offsetHeight ?? 60;
+      const left = Math.min(Math.max(0, x), window.innerWidth - w);
+      const top = Math.min(Math.max(0, y), window.innerHeight - h);
+      setCartBtnPos({ left, top });
+    };
+
+    const onPointerUp = () => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      pointerIdRef.current = null;
+      try {
+        localStorage.setItem("floatingCartPos", JSON.stringify(posRef.current));
+      } catch {}
+      setTimeout(() => {
+        movedRef.current = false;
+      }, 0);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.currentTarget as Element;
+    try {
+      (target as Element).setPointerCapture?.(e.pointerId);
+    } catch {}
+    pointerIdRef.current = e.pointerId;
+    draggingRef.current = true;
+    movedRef.current = false;
+    const rect = (e.currentTarget as Element).getBoundingClientRect();
+    offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    e.preventDefault();
   };
-  const handleMouseUp = () => setDragging(false);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (movedRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    setCartOpen(true);
+  };
 
   const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -86,21 +160,12 @@ export function PizzariaApp() {
               alt="Logo Pizzaria Alcapone"
               className="h-10 w-10 rounded-full object-cover"
             />
-
             <div className="text-2xl font-bold flex gap-1 items-center">
               <span className="font-sans text-gray-200">Pizzaria</span>
               <span className="font-serif text-pink-500">Alcapone</span>
             </div>
-
-            <Badge
-              className={`px-2 py-1 rounded ${isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}
-            >
-              <Clock className="h-3 w-3 mr-1" />
-              {isOpen() ? "ABERTO" : "FECHADO"}
-            </Badge>
           </div>
 
-          {/* Desktop buttons */}
           <div className="hidden md:flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={openInstagram}>
               <Instagram className="h-5 w-5" />
@@ -123,7 +188,6 @@ export function PizzariaApp() {
             </Button>
           </div>
 
-          {/* Mobile menu */}
           <div className="md:hidden">
             <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <Menu className="h-6 w-6" />
@@ -131,7 +195,6 @@ export function PizzariaApp() {
           </div>
         </div>
 
-        {/* Dropdown mobile */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-gray-800 px-4 py-2 space-y-2">
             <Button variant="ghost" className="w-full justify-start" onClick={openInstagram}>
@@ -152,6 +215,18 @@ export function PizzariaApp() {
         )}
       </header>
 
+      {/* Badge Aberto/Fechado abaixo do header */}
+      <div className="bg-gray-800 py-2 text-center border-b border-gray-700">
+        <Badge
+          className={`px-3 py-2 rounded text-sm ${
+            isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"
+          }`}
+        >
+          <Clock className="h-4 w-4 mr-2 inline" />
+          {isOpen() ? "ABERTO" : "FECHADO"}
+        </Badge>
+      </div>
+
       {/* Campo de busca */}
       {activeTab === "menu" && (
         <div className="container mx-auto px-4 py-4">
@@ -171,7 +246,6 @@ export function PizzariaApp() {
           <div className="container mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">PIZZARIA ALCAPONE</h1>
             <p className="text-xl md:text-2xl mb-8 opacity-90">A melhor pizza da região! 🍕</p>
-
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button variant="hero" size="xl" onClick={() => setActiveTab("menu")}>
                 Ver Cardápio
@@ -190,7 +264,6 @@ export function PizzariaApp() {
                 Como Chegar
               </Button>
             </div>
-
             <Card className="max-w-md mx-auto bg-white/10 border-white/20 text-white">
               <CardHeader className="text-center">
                 <CardTitle className="flex items-center justify-center gap-2">
@@ -264,22 +337,24 @@ export function PizzariaApp() {
         )}
       </main>
 
-      {/* Floating Buttons */}
+      {/* Floating Pizza Button */}
       <Button
         variant="floating"
-        onClick={() => setCartOpen(true)}
+        onClick={handleClick}
         size="pizza"
         className="relative"
         style={{
           position: "fixed",
-          left: cartBtnPos.x,
-          top: cartBtnPos.y,
+          left: cartBtnPos.left,
+          top: cartBtnPos.top,
           zIndex: 50,
-          cursor: "grab"
+          cursor: draggingRef.current ? "grabbing" : "grab",
+          touchAction: "none",
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
+        onPointerDown={(e) => {
+          btnRef.current = e.currentTarget as unknown as HTMLElement;
+          handlePointerDown(e);
+        }}
         aria-label="Abrir carrinho"
       >
         <span className="text-xl">🍕</span>
@@ -299,7 +374,6 @@ export function PizzariaApp() {
         PROMOÇÕES
       </Button>
 
-      {/* Modals */}
       <Cart open={cartOpen} onOpenChange={setCartOpen} cart={cart} />
       <PromoModal open={promoOpen} onOpenChange={setPromoOpen} onAddToCart={cart.addItem} />
     </div>
