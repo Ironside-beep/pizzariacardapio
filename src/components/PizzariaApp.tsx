@@ -25,6 +25,9 @@ export function PizzariaApp() {
   const movedRef = useRef(false);
   const mountedRef = useRef(false);
 
+  // nova ref para posição inicial do ponteiro (usada para threshold)
+  const pointerDownPosRef = useRef({ x: 0, y: 0 });
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cart = useCart();
 
@@ -90,16 +93,32 @@ export function PizzariaApp() {
   }, [cartBtnPos]);
 
   useEffect(() => {
+    const DRAG_THRESHOLD = 8; // pixels — ajuste se quiser menor/maior
+
     const onPointerMove = (e: PointerEvent) => {
+      // se não está em ponteiro down, ignora
       if (!draggingRef.current) return;
-      movedRef.current = true;
-      const x = e.clientX - offsetRef.current.x;
-      const y = e.clientY - offsetRef.current.y;
-      const w = btnRef.current?.offsetWidth ?? 60;
-      const h = btnRef.current?.offsetHeight ?? 60;
-      const left = Math.min(Math.max(0, x), window.innerWidth - w);
-      const top = Math.min(Math.max(0, y), window.innerHeight - h);
-      setCartBtnPos({ left, top });
+
+      // calcula deslocamento desde o pointerdown inicial
+      const dx = e.clientX - pointerDownPosRef.current.x;
+      const dy = e.clientY - pointerDownPosRef.current.y;
+      const dist = Math.hypot(dx, dy);
+
+      // só marca moved se ultrapassar o threshold
+      if (!movedRef.current && dist > DRAG_THRESHOLD) {
+        movedRef.current = true;
+      }
+
+      // se já ultrapassou o threshold, atualiza posição (arrastar)
+      if (movedRef.current) {
+        const x = e.clientX - offsetRef.current.x;
+        const y = e.clientY - offsetRef.current.y;
+        const w = btnRef.current?.offsetWidth ?? 60;
+        const h = btnRef.current?.offsetHeight ?? 60;
+        const left = Math.min(Math.max(0, x), window.innerWidth - w);
+        const top = Math.min(Math.max(0, y), window.innerHeight - h);
+        setCartBtnPos({ left, top });
+      }
     };
 
     const onPointerUp = () => {
@@ -109,6 +128,7 @@ export function PizzariaApp() {
       try {
         localStorage.setItem("floatingCartPos", JSON.stringify(posRef.current));
       } catch {}
+      // reseta movedRef após short timeout para permitir clicks futuros
       setTimeout(() => {
         movedRef.current = false;
       }, 0);
@@ -129,14 +149,17 @@ export function PizzariaApp() {
       (target as Element).setPointerCapture?.(e.pointerId);
     } catch {}
     pointerIdRef.current = e.pointerId;
+    // registramos o ponto inicial do ponteiro para o threshold
+    pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
     draggingRef.current = true;
-    movedRef.current = false;
+    movedRef.current = false; // reset aqui — só vai virar true se ultrapassar threshold
     const rect = (e.currentTarget as Element).getBoundingClientRect();
     offsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    e.preventDefault();
+    // OBS: removi e.preventDefault() para não bloquear o click em alguns navegadores móveis
   };
 
   const handleClick = (e: React.MouseEvent) => {
+    // se houve arraste (movimento acima do threshold), bloqueia o click
     if (movedRef.current) {
       e.preventDefault();
       e.stopPropagation();
@@ -349,7 +372,7 @@ export function PizzariaApp() {
           top: cartBtnPos.top,
           zIndex: 50,
           cursor: draggingRef.current ? "grabbing" : "grab",
-          touchAction: "none",
+          touchAction: "manipulation", // alterado para manipulação (melhor toque mobile)
         }}
         onPointerDown={(e) => {
           btnRef.current = e.currentTarget as unknown as HTMLElement;
