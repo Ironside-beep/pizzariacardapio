@@ -293,7 +293,7 @@ export const pizzasSalgadas: MenuItem[] = [
   prices: { broto: 0.0, grande: 0.0 } // preços não informados, ajustar depois
 }
 
-  // Continue with remaining pizzas...
+
 ];
 
 export const pizzasDoces: MenuItem[] = [

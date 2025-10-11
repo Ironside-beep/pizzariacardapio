@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"; 
-import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu } from "lucide-react";
+import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu, Pizza, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { DeliveryAlert } from "./DeliveryAlert";
 import { Cart } from "./Cart";
 import { MenuSection } from "./MenuSection";
 import { PromoModal } from "./PromoModal";
+import { MeioMeioModal } from "./MeioMeioModal";
 import { useCart } from "@/hooks/useCart";
 import { pizzasSalgadas, pizzasDoces, esfihasSalgadas, esfihasDoces, bebidas } from "@/data/menu";
 
@@ -16,6 +17,7 @@ export function PizzariaApp() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [promoOpen, setPromoOpen] = useState(false);
+  const [meioMeioOpen, setMeioMeioOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [cartBtnPos, setCartBtnPos] = useState({ left: 20, top: 20 });
   const draggingRef = useRef(false);
@@ -152,7 +154,7 @@ export function PizzariaApp() {
       <DeliveryAlert />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-900 border-b">
+      <header className="sticky top-0 z-40 bg-gray-900 border-b border-gray-700 shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <img src="/logo.jpg" alt="Logo Pizzaria Alcapone" className="h-10 w-10 rounded-full object-cover" />
@@ -179,7 +181,7 @@ export function PizzariaApp() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden bg-gray-800 px-4 py-2 space-y-2">
+          <div className="md:hidden bg-gray-800 px-4 py-2 space-y-2 border-t border-gray-700">
             <Button variant="ghost" className="w-full justify-start" onClick={openInstagram}>
               <Instagram className="h-5 w-5 mr-2" /> Instagram
             </Button>
@@ -195,22 +197,27 @@ export function PizzariaApp() {
       </header>
 
       {/* Badge Aberto/Fechado */}
-      <div className="bg-gray-800 py-2 text-center border-b border-gray-700">
+      <div className="sticky top-[73px] z-30 bg-gray-800 py-2 text-center border-b border-gray-700">
         <Badge className={`px-3 py-2 rounded text-sm ${isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
           <Clock className="h-4 w-4 mr-2 inline" />{isOpen() ? "ABERTO" : "FECHADO"}
         </Badge>
       </div>
 
-      {/* Campo de busca */}
+      {/* Campo de busca FIXO */}
       {activeTab === "menu" && (
-        <div className="container mx-auto px-4 py-4">
-          <input
-            type="text"
-            placeholder="Buscar produto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 rounded border border-gray-400 text-black"
-          />
+        <div className="sticky top-[121px] z-30 bg-gray-900 border-b border-gray-700 shadow-lg">
+          <div className="container mx-auto px-4 py-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar pizza, esfiha, bebida..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -239,7 +246,7 @@ export function PizzariaApp() {
       )}
 
       {/* Navigation */}
-      <nav className="sticky top-[73px] z-30 bg-gray-900 border-b">
+      <nav className="sticky top-[73px] z-30 bg-gray-900 border-b border-gray-700">
         <div className="container mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto">
             <Button variant={activeTab === "home" ? "default" : "ghost"} onClick={() => setActiveTab("home")} className="whitespace-nowrap">Início</Button>
@@ -266,6 +273,18 @@ export function PizzariaApp() {
       <main className="container mx-auto px-4 py-8">
         {activeTab === "menu" && (
           <div className="space-y-8">
+            {/* Botão Meio a Meio */}
+            <div className="flex justify-center">
+              <Button
+                onClick={() => setMeioMeioOpen(true)}
+                className="w-full sm:w-auto bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-700 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-lg shadow-lg transition-all transform hover:scale-105"
+                size="lg"
+              >
+                <Pizza className="h-5 w-5 mr-2" />
+                Montar Pizza Meio a Meio (Grande)
+              </Button>
+            </div>
+
             <div id="pizzas-salgadas"><MenuSection title="🍕 Pizzas Salgadas" items={filterItems(pizzasSalgadas)} category="pizza-salgada" onAddToCart={cart.addItem} hasSizes /></div>
             <div id="pizzas-doces"><MenuSection title="🍰 Pizzas Doces" items={filterItems(pizzasDoces)} category="pizza-doce" onAddToCart={cart.addItem} hasSizes /></div>
             <div id="esfihas-salgadas"><MenuSection title="🥟 Esfihas Salgadas" items={filterItems(esfihasSalgadas)} category="esfiha-salgada" onAddToCart={cart.addItem} /></div>
@@ -287,7 +306,7 @@ export function PizzariaApp() {
           top: cartBtnPos.top,
           zIndex: 50,
           cursor: draggingRef.current ? "grabbing" : "grab",
-          touchAction: "none", // crítico para drag no mobile
+          touchAction: "none",
         }}
         onPointerDown={(e) => {
           btnRef.current = e.currentTarget as unknown as HTMLElement;
@@ -314,6 +333,13 @@ export function PizzariaApp() {
 
       <Cart open={cartOpen} onOpenChange={setCartOpen} cart={cart} />
       <PromoModal open={promoOpen} onOpenChange={setPromoOpen} onAddToCart={cart.addItem} />
+      <MeioMeioModal 
+        open={meioMeioOpen} 
+        onOpenChange={setMeioMeioOpen}
+        pizzasSalgadas={pizzasSalgadas}
+        pizzasDoces={pizzasDoces}
+        onAddToCart={cart.addItem}
+      />
     </div>
   );
 }
