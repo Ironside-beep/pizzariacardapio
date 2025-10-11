@@ -1,8 +1,7 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Percent } from "lucide-react";
+import { Percent, ShoppingCart } from "lucide-react";
 import { promocoes } from "@/data/menu";
 import { type CartItem } from "@/hooks/useCart";
 
@@ -13,85 +12,77 @@ interface PromoModalProps {
 }
 
 export function PromoModal({ open, onOpenChange, onAddToCart }: PromoModalProps) {
-  const addPromoToCart = (promo: typeof promocoes[0]) => {
+  
+  const handleAddPromo = (promo: typeof promocoes[0]) => {
     onAddToCart({
       id: promo.id,
-      category: "esfiha-salgada", // Promocoes are mainly esfihas
+      category: "esfiha-salgada",
       name: promo.name,
       price: promo.price,
     });
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl bg-gray-900 text-white border-2 border-green-500/30 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <Percent className="h-6 w-6 text-primary" />
-            <span className="bg-gradient-pizza bg-clip-text text-transparent">
-              PROMOÇÕES ESPECIAIS
-            </span>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Percent className="h-6 w-6 text-green-500" />
+            Promoções Especiais
           </DialogTitle>
-          <DialogDescription>
-            Pacotes de esfihas com preços especiais! Não mexemos nos pacotes.
+          <DialogDescription className="text-gray-400">
+            Pacotes com preços especiais!
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-4 py-4">
           {promocoes.map((promo) => (
-            <Card key={promo.id} className="card-hover border-primary/20">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-bold text-primary">
-                      {promo.name}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {promo.description}
-                    </CardDescription>
+            <div 
+              key={promo.id} 
+              className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-green-500/50 transition-colors"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-bold text-white">{promo.name}</h3>
+                    <Badge className="bg-green-600 text-white">PROMOÇÃO</Badge>
                   </div>
-                  <Badge variant="default" className="bg-primary pulse-glow">
-                    OFERTA
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Inclui:</p>
-                  <ul className="text-sm space-y-1">
-                    {promo.items.map((item, index) => (
-                      <li key={index} className="flex items-center gap-2">
-                        <div className="h-1.5 w-1.5 bg-primary rounded-full" />
+                  <p className="text-sm text-gray-400 mb-3">{promo.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {promo.items.map((item, idx) => (
+                      <Badge key={idx} variant="outline" className="text-white border-gray-600">
                         {item}
-                      </li>
+                      </Badge>
                     ))}
-                  </ul>
+                  </div>
                 </div>
-                
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="text-2xl font-bold text-primary">
+                <div className="flex flex-col items-end gap-2 min-w-[120px]">
+                  <p className="text-2xl font-bold text-green-500">
                     R$ {promo.price.toFixed(2)}
-                  </span>
+                  </p>
                   <Button
-                    variant="pizza"
-                    onClick={() => addPromoToCart(promo)}
-                    className="gap-2"
+                    onClick={() => handleAddPromo(promo)}
+                    className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    size="sm"
                   >
-                    <Plus className="h-4 w-4" />
+                    <ShoppingCart className="h-4 w-4 mr-2" />
                     Adicionar
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
 
-        <div className="mt-6 p-4 bg-muted rounded-lg">
-          <p className="text-sm text-center text-muted-foreground">
-            ⚠️ <strong>Importante:</strong> Não fazemos alterações nos pacotes promocionais.
-            Os itens são fixos conforme descrição.
-          </p>
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+          >
+            Fechar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

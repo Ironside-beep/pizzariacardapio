@@ -49,16 +49,16 @@ export function MenuSection({ title, items, category, onAddToCart, hasSizes = fa
           const isExpanded = expandedItems.has(item.id);
           
           return (
-            <Card key={item.id} className="card-hover">
+            <Card key={item.id} className="card-hover bg-gray-800 border-gray-700 text-white">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-base font-semibold leading-tight">
+                    <CardTitle className="text-base font-semibold leading-tight text-white">
                       {item.name}
                     </CardTitle>
                     {item.description && (
                       <CardDescription 
-                        className={`mt-1 text-xs leading-relaxed ${
+                        className={`mt-1 text-xs leading-relaxed text-gray-400 ${
                           isExpanded ? "" : "line-clamp-2"
                         }`}
                         onClick={() => item.description && toggleExpanded(item.id)}
@@ -79,15 +79,15 @@ export function MenuSection({ title, items, category, onAddToCart, hasSizes = fa
                       {item.prices.broto && (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">BROTO</Badge>
-                            <span className="font-semibold text-primary">
+                            <Badge variant="outline" className="text-xs text-white border-gray-600">BROTO</Badge>
+                            <span className="font-semibold text-green-500">
                               R$ {item.prices.broto.toFixed(2)}
                             </span>
                           </div>
                           <Button
                             variant="pizza"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 bg-green-600 hover:bg-green-700"
                             onClick={() => addToCart(item, "broto")}
                           >
                             <Plus className="h-3 w-3" />
@@ -98,15 +98,15 @@ export function MenuSection({ title, items, category, onAddToCart, hasSizes = fa
                       {item.prices.grande && (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">GRANDE</Badge>
-                            <span className="font-semibold text-primary">
+                            <Badge variant="outline" className="text-xs text-white border-gray-600">GRANDE</Badge>
+                            <span className="font-semibold text-green-500">
                               R$ {item.prices.grande.toFixed(2)}
                             </span>
                           </div>
                           <Button
                             variant="pizza"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-8 w-8 bg-green-600 hover:bg-green-700"
                             onClick={() => addToCart(item, "grande")}
                           >
                             <Plus className="h-3 w-3" />
@@ -117,12 +117,13 @@ export function MenuSection({ title, items, category, onAddToCart, hasSizes = fa
                   ) : (
                     // Single price items
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-primary text-lg">
+                      <span className="font-semibold text-green-500 text-lg">
                         R$ {(item.prices.unit || 0).toFixed(2)}
                       </span>
                       <Button
                         variant="pizza"
                         size="icon"
+                        className="bg-green-600 hover:bg-green-700"
                         onClick={() => addToCart(item)}
                       >
                         <Plus className="h-4 w-4" />
