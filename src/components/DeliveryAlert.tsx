@@ -31,7 +31,7 @@ export function DeliveryAlert() {
                 <Clock className="h-5 w-5" />
                 <span>Tempo de Entrega</span>
               </div>
-              <div className="text-foreground font-medium">
+              <div className="text-sm text-muted-foreground">
                 Nossos pedidos para entrega levam entre <strong className="text-primary">50 a 60 minutos</strong> para chegar até você.
               </div>
               <div className="text-sm text-muted-foreground">
