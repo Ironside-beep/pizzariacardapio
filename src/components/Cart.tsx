@@ -240,7 +240,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
         <Sheet open={open} onOpenChange={onOpenChange}>
           <SheetContent 
             className="w-full sm:max-w-lg overflow-y-auto bg-gray-900 text-white flex flex-col h-full"
-            style={{ maxHeight: '100vh', maxHeight: '100dvh' }}
+            style={{ maxHeight: '100dvh' }}
           >
             <SheetHeader className="flex-shrink-0">
               <SheetTitle className="flex items-center gap-2 text-white">
@@ -401,7 +401,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent 
           className="w-full sm:max-w-lg overflow-y-auto bg-gray-900 text-white flex flex-col h-full"
-          style={{ maxHeight: '100vh', maxHeight: '100dvh' }}
+          style={{ maxHeight: '100dvh' }}
         >
           <SheetHeader className="flex-shrink-0">
             <SheetTitle className="flex items-center gap-2 text-white">
