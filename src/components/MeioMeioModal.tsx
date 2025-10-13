@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pizza, Check } from "lucide-react";
 import { MenuItem } from "@/data/menu";
 import { type CartItem } from "@/hooks/useCart";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MeioMeioModalProps {
   open: boolean;
@@ -28,14 +27,22 @@ export function MeioMeioModal({
   const [pizzaType, setPizzaType] = useState<"salgada" | "doce">("salgada");
   const [selectingHalf, setSelectingHalf] = useState<"first" | "second" | null>(null);
 
-  // Pega as pizzas baseado no tipo selecionado
+  // Reset ao fechar
+  useEffect(() => {
+    if (!open) {
+      // Delay para evitar tela branca
+      setTimeout(() => {
+        setSelectingHalf(null);
+      }, 300);
+    }
+  }, [open]);
+
   const getPizzasByType = () => {
     return pizzaType === "salgada" ? pizzasSalgadas : pizzasDoces;
   };
 
   const allPizzas = [...pizzasSalgadas, ...pizzasDoces];
 
-  // Calcula o preço do meio a meio (PREÇO DA MAIS CARA)
   const calculateMeioMeioPrice = () => {
     const pizza1 = allPizzas.find(p => p.id === firstHalf);
     const pizza2 = allPizzas.find(p => p.id === secondHalf);
@@ -45,7 +52,6 @@ export function MeioMeioModal({
     const price1 = (pizzaSize === "broto" ? pizza1.prices.broto : pizza1.prices.grande) || 0;
     const price2 = (pizzaSize === "broto" ? pizza2.prices.broto : pizza2.prices.grande) || 0;
     
-    // Retorna o MAIOR preço
     return Math.max(price1, price2);
   };
 
@@ -59,7 +65,6 @@ export function MeioMeioModal({
     const pizza2 = allPizzas.find(p => p.id === secondHalf);
     const totalPrice = calculateMeioMeioPrice();
     
-    // Adiciona ao carrinho com ID simplificado
     onAddToCart({
       id: `mm-${Date.now()}`,
       category: pizzaType === "salgada" ? "pizza-salgada" : "pizza-doce",
@@ -68,7 +73,6 @@ export function MeioMeioModal({
       size: pizzaSize
     });
     
-    // Limpa e fecha
     setFirstHalf("");
     setSecondHalf("");
     setSelectingHalf(null);
@@ -82,22 +86,29 @@ export function MeioMeioModal({
     onOpenChange(false);
   };
 
-  // Reseta as seleções quando muda o tipo
   const handleTypeChange = (newType: "salgada" | "doce") => {
     setPizzaType(newType);
     setFirstHalf("");
     setSecondHalf("");
-    setSelectingHalf(null);
   };
 
   const handlePizzaSelect = (pizzaId: string) => {
     if (selectingHalf === "first") {
       setFirstHalf(pizzaId);
-      setSelectingHalf(null);
     } else if (selectingHalf === "second") {
       setSecondHalf(pizzaId);
-      setSelectingHalf(null);
     }
+    // Pequeno delay para evitar tela branca
+    setTimeout(() => {
+      setSelectingHalf(null);
+    }, 100);
+  };
+
+  const handleBackToMain = () => {
+    // Delay para evitar tela branca em dispositivos antigos
+    setTimeout(() => {
+      setSelectingHalf(null);
+    }, 50);
   };
 
   const getPizzaName = (id: string) => {
@@ -112,18 +123,24 @@ export function MeioMeioModal({
 
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-2xl bg-gray-900 text-white border-2 border-pink-500/30 max-h-[90vh] flex flex-col p-0">
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Pizza className="h-6 w-6 text-pink-500" />
-              Escolha o {selectingHalf === "first" ? "Primeiro" : "Segundo"} Sabor
+        <DialogContent className="sm:max-w-2xl bg-gray-900 text-white border-2 border-pink-500/30 p-0 gap-0 max-h-[95vh] sm:max-h-[90vh]">
+          <DialogHeader className="p-4 sm:p-6 pb-3 sm:pb-4 flex-shrink-0 border-b border-gray-800">
+            <DialogTitle className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+              <Pizza className="h-5 w-5 sm:h-6 sm:w-6 text-pink-500" />
+              {selectingHalf === "first" ? "Primeiro" : "Segundo"} Sabor
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Selecione uma pizza {pizzaType === "salgada" ? "salgada" : "doce"}
+            <DialogDescription className="text-gray-400 text-xs sm:text-sm">
+              Toque para selecionar uma pizza {pizzaType === "salgada" ? "salgada" : "doce"}
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 px-6">
+          <div 
+            className="flex-1 overflow-y-scroll overscroll-contain px-4 sm:px-6"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              minHeight: 0
+            }}
+          >
             <div className="space-y-2 py-4">
               {availablePizzas.map((pizza) => {
                 const price = (pizzaSize === "broto" ? pizza.prices.broto : pizza.prices.grande) || 0;
@@ -132,23 +149,26 @@ export function MeioMeioModal({
                 return (
                   <button
                     key={pizza.id}
+                    type="button"
                     onClick={() => handlePizzaSelect(pizza.id)}
-                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full text-left p-3 sm:p-4 rounded-lg border-2 transition-colors touch-manipulation ${
                       isSelected 
                         ? "border-green-500 bg-green-500/10" 
-                        : "border-gray-700 bg-gray-800 hover:border-gray-600 hover:bg-gray-750"
+                        : "border-gray-700 bg-gray-800 active:bg-gray-700"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start justify-between gap-2 sm:gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-white truncate">{pizza.name}</h4>
-                        <p className="text-sm text-gray-400 line-clamp-2">{pizza.description}</p>
+                        <h4 className="font-semibold text-white text-sm sm:text-base leading-tight">{pizza.name}</h4>
+                        {pizza.description && (
+                          <p className="text-xs sm:text-sm text-gray-400 line-clamp-1 mt-1">{pizza.description}</p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="font-bold text-green-500">R$ {price.toFixed(2)}</span>
+                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        <span className="font-bold text-green-500 text-sm sm:text-base whitespace-nowrap">R$ {price.toFixed(2)}</span>
                         {isSelected && (
-                          <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
-                            <Check className="h-4 w-4 text-white" />
+                          <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                            <Check className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                           </div>
                         )}
                       </div>
@@ -157,13 +177,14 @@ export function MeioMeioModal({
                 );
               })}
             </div>
-          </ScrollArea>
+          </div>
 
-          <div className="p-6 pt-4 border-t border-gray-700 flex gap-3">
+          <div className="flex-shrink-0 p-4 sm:p-6 pt-3 sm:pt-4 border-t border-gray-800">
             <Button
+              type="button"
               variant="outline"
-              onClick={() => setSelectingHalf(null)}
-              className="flex-1 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+              onClick={handleBackToMain}
+              className="w-full bg-gray-800 text-white border-gray-700 hover:bg-gray-700 touch-manipulation"
             >
               Voltar
             </Button>
@@ -176,27 +197,27 @@ export function MeioMeioModal({
   // Tela principal
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl bg-gray-900 text-white border-2 border-pink-500/30 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl bg-gray-900 text-white border-2 border-pink-500/30 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <Pizza className="h-6 w-6 text-pink-500" />
+          <DialogTitle className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+            <Pizza className="h-5 w-5 sm:h-6 sm:w-6 text-pink-500" />
             Monte sua Pizza Meio a Meio
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-gray-400 text-xs sm:text-sm">
             Escolha 2 sabores do mesmo tipo (salgada OU doce)
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 sm:space-y-6 py-4">
           {/* Seletor de Tamanho */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-200">
+            <label className="text-xs sm:text-sm font-semibold text-gray-200">
               Tamanho da Pizza *
             </label>
             <div className="flex gap-2">
               <Badge 
                 variant={pizzaSize === "broto" ? "default" : "outline"}
-                className={`cursor-pointer px-6 py-3 text-base font-bold transition-colors ${
+                className={`cursor-pointer px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-bold transition-colors touch-manipulation ${
                   pizzaSize === "broto" 
                     ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
                     : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-white"
@@ -207,7 +228,7 @@ export function MeioMeioModal({
               </Badge>
               <Badge 
                 variant={pizzaSize === "grande" ? "default" : "outline"}
-                className={`cursor-pointer px-6 py-3 text-base font-bold transition-colors ${
+                className={`cursor-pointer px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-bold transition-colors touch-manipulation ${
                   pizzaSize === "grande" 
                     ? "bg-green-600 hover:bg-green-700 text-white border-green-600" 
                     : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-white"
@@ -221,13 +242,13 @@ export function MeioMeioModal({
 
           {/* Seletor de Tipo */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-200">
+            <label className="text-xs sm:text-sm font-semibold text-gray-200">
               Tipo de Pizza *
             </label>
             <div className="flex gap-2 flex-wrap">
               <Badge 
                 variant={pizzaType === "salgada" ? "default" : "outline"}
-                className={`cursor-pointer px-4 py-2 font-bold transition-colors ${
+                className={`cursor-pointer px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-bold transition-colors touch-manipulation ${
                   pizzaType === "salgada" 
                     ? "bg-pink-600 hover:bg-pink-700 text-white border-pink-600" 
                     : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-white"
@@ -238,7 +259,7 @@ export function MeioMeioModal({
               </Badge>
               <Badge 
                 variant={pizzaType === "doce" ? "default" : "outline"}
-                className={`cursor-pointer px-4 py-2 font-bold transition-colors ${
+                className={`cursor-pointer px-3 sm:px-4 py-1.5 sm:py-2 text-sm font-bold transition-colors touch-manipulation ${
                   pizzaType === "doce" 
                     ? "bg-pink-600 hover:bg-pink-700 text-white border-pink-600" 
                     : "bg-gray-700 hover:bg-gray-600 border-gray-500 text-white"
@@ -255,50 +276,52 @@ export function MeioMeioModal({
 
           {/* Primeira Metade */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-200">
+            <label className="text-xs sm:text-sm font-semibold text-gray-200">
               Primeira Metade *
             </label>
             <Button
+              type="button"
               variant="outline"
               onClick={() => setSelectingHalf("first")}
-              className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-auto py-3"
+              className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-auto py-3 text-sm sm:text-base touch-manipulation"
             >
-              <span className={firstHalf ? "text-white" : "text-gray-400"}>
+              <span className={`truncate ${firstHalf ? "text-white" : "text-gray-400"}`}>
                 {firstHalf ? getPizzaName(firstHalf) : "Escolha o primeiro sabor"}
               </span>
-              <span className="text-gray-400">›</span>
+              <span className="text-gray-400 text-lg ml-2 flex-shrink-0">›</span>
             </Button>
           </div>
 
           {/* Segunda Metade */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-200">
+            <label className="text-xs sm:text-sm font-semibold text-gray-200">
               Segunda Metade *
             </label>
             <Button
+              type="button"
               variant="outline"
               onClick={() => setSelectingHalf("second")}
-              className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-auto py-3"
+              className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-auto py-3 text-sm sm:text-base touch-manipulation"
             >
-              <span className={secondHalf ? "text-white" : "text-gray-400"}>
+              <span className={`truncate ${secondHalf ? "text-white" : "text-gray-400"}`}>
                 {secondHalf ? getPizzaName(secondHalf) : "Escolha o segundo sabor"}
               </span>
-              <span className="text-gray-400">›</span>
+              <span className="text-gray-400 text-lg ml-2 flex-shrink-0">›</span>
             </Button>
           </div>
 
           {/* Preview do Preço */}
           {firstHalf && secondHalf && (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div>
-                  <p className="text-sm text-gray-400">Pizza {pizzaSize === "broto" ? "Broto" : "Grande"} Meio a Meio</p>
-                  <p className="font-semibold text-white">
+                <div className="flex-1">
+                  <p className="text-xs sm:text-sm text-gray-400">Pizza {pizzaSize === "broto" ? "Broto" : "Grande"} Meio a Meio</p>
+                  <p className="font-semibold text-white text-sm sm:text-base break-words">
                     {getPizzaName(firstHalf)} + {getPizzaName(secondHalf)}
                   </p>
                 </div>
-                <div className="text-left sm:text-right">
-                  <p className="text-2xl font-bold text-green-500">
+                <div className="text-left sm:text-right flex-shrink-0">
+                  <p className="text-xl sm:text-2xl font-bold text-green-500">
                     R$ {calculateMeioMeioPrice().toFixed(2)}
                   </p>
                 </div>
@@ -307,18 +330,20 @@ export function MeioMeioModal({
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <Button
+            type="button"
             variant="outline"
             onClick={handleClose}
-            className="flex-1 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+            className="flex-1 bg-gray-800 text-white border-gray-700 hover:bg-gray-700 touch-manipulation"
           >
             Cancelar
           </Button>
           <Button
+            type="button"
             onClick={handleAddMeioMeio}
             disabled={!firstHalf || !secondHalf}
-            className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
           >
             Adicionar ao Carrinho
           </Button>
