@@ -238,8 +238,11 @@ Forma de pagamento: ${customerInfo.paymentMethod}
         <ToastNotification />
         <ClosedAlert />
         <Sheet open={open} onOpenChange={onOpenChange}>
-          <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-gray-900 text-white">
-            <SheetHeader>
+          <SheetContent 
+            className="w-full sm:max-w-lg overflow-y-auto bg-gray-900 text-white flex flex-col h-full"
+            style={{ maxHeight: '100vh', maxHeight: '100dvh' }}
+          >
+            <SheetHeader className="flex-shrink-0">
               <SheetTitle className="flex items-center gap-2 text-white">
                 <ShoppingCart className="h-5 w-5" />
                 <span className="truncate">Finalizar Pedido</span>
@@ -249,7 +252,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
               </SheetDescription>
             </SheetHeader>
 
-            <div className="space-y-6 py-6">
+            <div className="space-y-6 py-6 flex-1 overflow-y-auto">
               <div className="flex gap-4 mb-4">
                 <Button 
                   variant="ghost"
@@ -364,7 +367,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
               </div>
             </div>
 
-            <SheetFooter className="flex flex-col gap-2">
+            <SheetFooter className="flex-shrink-0 flex flex-col gap-2 pt-4 border-t border-gray-700">
               <div className="flex items-center justify-between text-lg font-bold text-white">
                 <span>Total:</span>
                 <span className="text-green-500">R$ {total.toFixed(2)}</span>
@@ -396,8 +399,11 @@ Forma de pagamento: ${customerInfo.paymentMethod}
       <ToastNotification />
       <ClosedAlert />
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-gray-900 text-white">
-          <SheetHeader>
+        <SheetContent 
+          className="w-full sm:max-w-lg overflow-y-auto bg-gray-900 text-white flex flex-col h-full"
+          style={{ maxHeight: '100vh', maxHeight: '100dvh' }}
+        >
+          <SheetHeader className="flex-shrink-0">
             <SheetTitle className="flex items-center gap-2 text-white">
               <ShoppingCart className="h-5 w-5" />
               <span className="truncate">Carrinho ({items.reduce((sum, item) => sum + item.quantity, 0)} itens)</span>
@@ -407,7 +413,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
             </SheetDescription>
           </SheetHeader>
 
-          <div className="space-y-4 py-6">
+          <div className="space-y-4 py-6 flex-1 overflow-y-auto">
             {items.length === 0 ? (
               <div className="text-center py-8 text-gray-400">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -472,7 +478,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
           </div>
 
           {items.length > 0 && (
-            <SheetFooter className="flex flex-col gap-2">
+            <SheetFooter className="flex-shrink-0 flex flex-col gap-2 pt-4 border-t border-gray-700">
               <Button 
                 variant="outline" 
                 onClick={clearCart} 
