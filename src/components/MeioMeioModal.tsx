@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Pizza } from "lucide-react";
+import { Pizza, Check } from "lucide-react";
 import { MenuItem } from "@/data/menu";
 import { type CartItem } from "@/hooks/useCart";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MeioMeioModalProps {
   open: boolean;
@@ -26,6 +26,7 @@ export function MeioMeioModal({
   const [secondHalf, setSecondHalf] = useState("");
   const [pizzaSize, setPizzaSize] = useState<"broto" | "grande">("grande");
   const [pizzaType, setPizzaType] = useState<"salgada" | "doce">("salgada");
+  const [selectingHalf, setSelectingHalf] = useState<"first" | "second" | null>(null);
 
   // Pega as pizzas baseado no tipo selecionado
   const getPizzasByType = () => {
@@ -58,9 +59,9 @@ export function MeioMeioModal({
     const pizza2 = allPizzas.find(p => p.id === secondHalf);
     const totalPrice = calculateMeioMeioPrice();
     
-    // Adiciona ao carrinho
+    // Adiciona ao carrinho com ID simplificado
     onAddToCart({
-      id: `meio-meio-${pizzaSize}-${firstHalf}-${secondHalf}`,
+      id: `mm-${Date.now()}`,
       category: pizzaType === "salgada" ? "pizza-salgada" : "pizza-doce",
       name: `MEIO A MEIO (${pizzaSize.toUpperCase()}): ${pizza1?.name} + ${pizza2?.name}`,
       price: totalPrice,
@@ -70,12 +71,14 @@ export function MeioMeioModal({
     // Limpa e fecha
     setFirstHalf("");
     setSecondHalf("");
+    setSelectingHalf(null);
     onOpenChange(false);
   };
 
   const handleClose = () => {
     setFirstHalf("");
     setSecondHalf("");
+    setSelectingHalf(null);
     onOpenChange(false);
   };
 
@@ -84,22 +87,95 @@ export function MeioMeioModal({
     setPizzaType(newType);
     setFirstHalf("");
     setSecondHalf("");
+    setSelectingHalf(null);
   };
 
-  const getPrice1 = () => {
-    const pizza = allPizzas.find(p => p.id === firstHalf);
-    if (!pizza) return 0;
-    return (pizzaSize === "broto" ? pizza.prices.broto : pizza.prices.grande) || 0;
+  const handlePizzaSelect = (pizzaId: string) => {
+    if (selectingHalf === "first") {
+      setFirstHalf(pizzaId);
+      setSelectingHalf(null);
+    } else if (selectingHalf === "second") {
+      setSecondHalf(pizzaId);
+      setSelectingHalf(null);
+    }
   };
 
-  const getPrice2 = () => {
-    const pizza = allPizzas.find(p => p.id === secondHalf);
-    if (!pizza) return 0;
-    return (pizzaSize === "broto" ? pizza.prices.broto : pizza.prices.grande) || 0;
+  const getPizzaName = (id: string) => {
+    return allPizzas.find(p => p.id === id)?.name || "";
   };
 
+  // Tela de seleção de sabores
+  if (selectingHalf) {
+    const availablePizzas = getPizzasByType().filter(p => 
+      pizzaSize === "broto" ? p.prices.broto : p.prices.grande
+    );
+
+    return (
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-2xl bg-gray-900 text-white border-2 border-pink-500/30 max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Pizza className="h-6 w-6 text-pink-500" />
+              Escolha o {selectingHalf === "first" ? "Primeiro" : "Segundo"} Sabor
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Selecione uma pizza {pizzaType === "salgada" ? "salgada" : "doce"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className="flex-1 px-6">
+            <div className="space-y-2 py-4">
+              {availablePizzas.map((pizza) => {
+                const price = (pizzaSize === "broto" ? pizza.prices.broto : pizza.prices.grande) || 0;
+                const isSelected = (selectingHalf === "first" ? firstHalf : secondHalf) === pizza.id;
+                
+                return (
+                  <button
+                    key={pizza.id}
+                    onClick={() => handlePizzaSelect(pizza.id)}
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                      isSelected 
+                        ? "border-green-500 bg-green-500/10" 
+                        : "border-gray-700 bg-gray-800 hover:border-gray-600 hover:bg-gray-750"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-white truncate">{pizza.name}</h4>
+                        <p className="text-sm text-gray-400 line-clamp-2">{pizza.description}</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="font-bold text-green-500">R$ {price.toFixed(2)}</span>
+                        {isSelected && (
+                          <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollArea>
+
+          <div className="p-6 pt-4 border-t border-gray-700 flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setSelectingHalf(null)}
+              className="flex-1 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+            >
+              Voltar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Tela principal
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl bg-gray-900 text-white border-2 border-pink-500/30 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
@@ -182,24 +258,16 @@ export function MeioMeioModal({
             <label className="text-sm font-semibold text-gray-200">
               Primeira Metade *
             </label>
-            <Select value={firstHalf} onValueChange={setFirstHalf}>
-              <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                <SelectValue placeholder="Escolha o primeiro sabor" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 max-h-[300px]">
-                {getPizzasByType()
-                  .filter(p => pizzaSize === "broto" ? p.prices.broto : p.prices.grande)
-                  .map((pizza) => (
-                    <SelectItem 
-                      key={pizza.id} 
-                      value={pizza.id} 
-                      className="text-white bg-gray-800 hover:bg-gray-700 focus:bg-gray-700 focus:text-white data-[highlighted]:bg-gray-700 data-[highlighted]:text-white"
-                    >
-                      {pizza.name} - R$ {(pizzaSize === "broto" ? pizza.prices.broto : pizza.prices.grande)?.toFixed(2)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <Button
+              variant="outline"
+              onClick={() => setSelectingHalf("first")}
+              className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-auto py-3"
+            >
+              <span className={firstHalf ? "text-white" : "text-gray-400"}>
+                {firstHalf ? getPizzaName(firstHalf) : "Escolha o primeiro sabor"}
+              </span>
+              <span className="text-gray-400">›</span>
+            </Button>
           </div>
 
           {/* Segunda Metade */}
@@ -207,24 +275,16 @@ export function MeioMeioModal({
             <label className="text-sm font-semibold text-gray-200">
               Segunda Metade *
             </label>
-            <Select value={secondHalf} onValueChange={setSecondHalf}>
-              <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                <SelectValue placeholder="Escolha o segundo sabor" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 max-h-[300px]">
-                {getPizzasByType()
-                  .filter(p => pizzaSize === "broto" ? p.prices.broto : p.prices.grande)
-                  .map((pizza) => (
-                    <SelectItem 
-                      key={pizza.id} 
-                      value={pizza.id}
-                      className="text-white bg-gray-800 hover:bg-gray-700 focus:bg-gray-700 focus:text-white data-[highlighted]:bg-gray-700 data-[highlighted]:text-white"
-                    >
-                      {pizza.name} - R$ {(pizzaSize === "broto" ? pizza.prices.broto : pizza.prices.grande)?.toFixed(2)}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <Button
+              variant="outline"
+              onClick={() => setSelectingHalf("second")}
+              className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 h-auto py-3"
+            >
+              <span className={secondHalf ? "text-white" : "text-gray-400"}>
+                {secondHalf ? getPizzaName(secondHalf) : "Escolha o segundo sabor"}
+              </span>
+              <span className="text-gray-400">›</span>
+            </Button>
           </div>
 
           {/* Preview do Preço */}
@@ -234,7 +294,7 @@ export function MeioMeioModal({
                 <div>
                   <p className="text-sm text-gray-400">Pizza {pizzaSize === "broto" ? "Broto" : "Grande"} Meio a Meio</p>
                   <p className="font-semibold text-white">
-                    {allPizzas.find(p => p.id === firstHalf)?.name} + {allPizzas.find(p => p.id === secondHalf)?.name}
+                    {getPizzaName(firstHalf)} + {getPizzaName(secondHalf)}
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
