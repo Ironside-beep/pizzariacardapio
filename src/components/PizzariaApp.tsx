@@ -333,7 +333,19 @@ export function PizzariaApp() {
         )}
       </Button>
 
-      <Cart open={cartOpen} onOpenChange={setCartOpen} cart={cart} />
+      {/* Cart com props individuais */}
+      <Cart 
+        open={cartOpen} 
+        onOpenChange={setCartOpen}
+        items={cart.items}
+        total={cart.total}
+        customerInfo={cart.customerInfo}
+        setCustomerInfo={cart.setCustomerInfo}
+        updateQuantity={cart.updateQuantity}
+        removeItem={cart.removeItem}
+        clearCart={cart.clearCart}
+      />
+      
       <PromoModal open={promoOpen} onOpenChange={setPromoOpen} onAddToCart={cart.addItem} />
       <MeioMeioModal 
         open={meioMeioOpen} 

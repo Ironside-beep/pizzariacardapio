@@ -8,16 +8,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Minus, ShoppingCart, Clock, AlertCircle } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// Importar as interfaces do hook
+import type { CartItem, CustomerInfo } from "@/hooks/useCart";
 
 interface CartProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  cart: ReturnType<typeof useCart>;
+  items: CartItem[];
+  total: number;
+  customerInfo: CustomerInfo;
+  setCustomerInfo: (info: CustomerInfo) => void;
+  updateQuantity: (id: string, quantity: number, size?: string) => void;
+  removeItem: (id: string, size?: string) => void;
+  clearCart: () => void;
 }
 
-export function Cart({ open, onOpenChange, cart }: CartProps) {
+export function Cart({ 
+  open, 
+  onOpenChange, 
+  items,
+  total,
+  customerInfo,
+  setCustomerInfo,
+  updateQuantity,
+  removeItem,
+  clearCart
+}: CartProps) {
   const [step, setStep] = useState<"cart" | "checkout">("cart");
   const [orderType, setOrderType] = useState<"retirada" | "entrega">("retirada");
   const [showClosedAlert, setShowClosedAlert] = useState(false);
@@ -77,7 +95,8 @@ export function Cart({ open, onOpenChange, cart }: CartProps) {
       return;
     }
 
-    if (!cart.customerInfo.name || !cart.customerInfo.phone || !cart.customerInfo.address || !cart.customerInfo.neighborhood || !cart.customerInfo.number) {
+    // Validação condicional baseada no tipo de pedido
+    if (!customerInfo.name || !customerInfo.phone) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -86,29 +105,47 @@ export function Cart({ open, onOpenChange, cart }: CartProps) {
       return;
     }
 
-    const itemsMessage = cart.items
+    // Se for entrega, valida os campos de endereço
+    if (orderType === "entrega" && (!customerInfo.address || !customerInfo.neighborhood || !customerInfo.number)) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha o endereço completo para entrega.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const itemsMessage = items
       .map(item => `${item.quantity}x ${item.name}${item.size ? ` (${item.size})` : ""} - R$ ${(item.price * item.quantity).toFixed(2)}`)
       .join("\n");
 
-    const message = `
+    // Monta a mensagem condicionalmente
+    let message = `
 Pedido:
 ${itemsMessage}
 
-Total: R$ ${cart.total.toFixed(2)}
+Total: R$ ${total.toFixed(2)}
 
-Tipo de pedido: ${orderType}
-Cliente: ${cart.customerInfo.name}
-Telefone: ${cart.customerInfo.phone}
-Endereço: ${cart.customerInfo.address}, ${cart.customerInfo.number} - ${cart.customerInfo.neighborhood}
-Observações: ${cart.customerInfo.observations || "Nenhuma"}
-Forma de pagamento: ${cart.customerInfo.paymentMethod}
+Tipo de pedido: ${orderType === "retirada" ? "Retirada no local" : "Entrega"}
+Cliente: ${customerInfo.name}
+Telefone: ${customerInfo.phone}`;
+
+    // Adiciona endereço apenas se for entrega
+    if (orderType === "entrega") {
+      message += `
+Endereço: ${customerInfo.address}, ${customerInfo.number} - ${customerInfo.neighborhood}`;
+    }
+
+    message += `
+Observações: ${customerInfo.observations || "Nenhuma"}
+Forma de pagamento: ${customerInfo.paymentMethod}
 `;
 
     const whatsappUrl = `https://wa.me/5511992596860?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
 
-    cart.clearCart();
-    cart.setCustomerInfo({
+    clearCart();
+    setCustomerInfo({
       name: "",
       phone: "",
       address: "",
@@ -236,8 +273,8 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
                     <Label htmlFor="name" className="text-gray-200">Nome *</Label>
                     <Input
                       id="name"
-                      value={cart.customerInfo.name}
-                      onChange={(e) => cart.setCustomerInfo({ ...cart.customerInfo, name: e.target.value })}
+                      value={customerInfo.name}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                       placeholder="Seu nome completo"
                       className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
                     />
@@ -246,54 +283,59 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
                     <Label htmlFor="phone" className="text-gray-200">Telefone *</Label>
                     <Input
                       id="phone"
-                      value={cart.customerInfo.phone}
-                      onChange={(e) => cart.setCustomerInfo({ ...cart.customerInfo, phone: e.target.value })}
+                      value={customerInfo.phone}
+                      onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                       placeholder="(11) 99999-9999"
                       className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="address" className="text-gray-200">Endereço *</Label>
-                    <Input
-                      id="address"
-                      value={cart.customerInfo.address}
-                      onChange={(e) => cart.setCustomerInfo({ ...cart.customerInfo, address: e.target.value })}
-                      placeholder="Rua, Avenida..."
-                      className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="number" className="text-gray-200">Número *</Label>
-                    <Input
-                      id="number"
-                      value={cart.customerInfo.number}
-                      onChange={(e) => cart.setCustomerInfo({ ...cart.customerInfo, number: e.target.value })}
-                      placeholder="123"
-                      className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
-                    />
-                  </div>
-                </div>
+                {/* Campos de endereço - apenas para entrega */}
+                {orderType === "entrega" && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="address" className="text-gray-200">Endereço *</Label>
+                        <Input
+                          id="address"
+                          value={customerInfo.address}
+                          onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
+                          placeholder="Rua, Avenida..."
+                          className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="number" className="text-gray-200">Número *</Label>
+                        <Input
+                          id="number"
+                          value={customerInfo.number}
+                          onChange={(e) => setCustomerInfo({ ...customerInfo, number: e.target.value })}
+                          placeholder="123"
+                          className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <Label htmlFor="neighborhood" className="text-gray-200">Bairro *</Label>
-                  <Input
-                    id="neighborhood"
-                    value={cart.customerInfo.neighborhood}
-                    onChange={(e) => cart.setCustomerInfo({ ...cart.customerInfo, neighborhood: e.target.value })}
-                    placeholder="Nome do bairro"
-                    className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="neighborhood" className="text-gray-200">Bairro *</Label>
+                      <Input
+                        id="neighborhood"
+                        value={customerInfo.neighborhood}
+                        onChange={(e) => setCustomerInfo({ ...customerInfo, neighborhood: e.target.value })}
+                        placeholder="Nome do bairro"
+                        className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <Label htmlFor="payment" className="text-gray-200">Forma de Pagamento *</Label>
                   <Select
-                    value={cart.customerInfo.paymentMethod}
+                    value={customerInfo.paymentMethod}
                     onValueChange={(value: "dinheiro" | "debito" | "credito" | "pix") => 
-                      cart.setCustomerInfo({ ...cart.customerInfo, paymentMethod: value })
+                      setCustomerInfo({ ...customerInfo, paymentMethod: value })
                     }
                   >
                     <SelectTrigger className="bg-gray-800 text-white border-gray-700">
@@ -312,8 +354,8 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
                   <Label htmlFor="observations" className="text-gray-200">Observações</Label>
                   <Textarea
                     id="observations"
-                    value={cart.customerInfo.observations}
-                    onChange={(e) => cart.setCustomerInfo({ ...cart.customerInfo, observations: e.target.value })}
+                    value={customerInfo.observations || ""}
+                    onChange={(e) => setCustomerInfo({ ...customerInfo, observations: e.target.value })}
                     placeholder="Observações adicionais (opcional)"
                     rows={3}
                     className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
@@ -325,7 +367,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
             <SheetFooter className="flex flex-col gap-2">
               <div className="flex items-center justify-between text-lg font-bold text-white">
                 <span>Total:</span>
-                <span className="text-green-500">R$ {cart.total.toFixed(2)}</span>
+                <span className="text-green-500">R$ {total.toFixed(2)}</span>
               </div>
               <div className="flex gap-2">
                 <Button 
@@ -358,7 +400,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2 text-white">
               <ShoppingCart className="h-5 w-5" />
-              <span className="truncate">Carrinho ({cart.items.reduce((sum, item) => sum + item.quantity, 0)} itens)</span>
+              <span className="truncate">Carrinho ({items.reduce((sum, item) => sum + item.quantity, 0)} itens)</span>
             </SheetTitle>
             <SheetDescription className="text-gray-400">
               Revise seu pedido antes de finalizar
@@ -366,7 +408,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
           </SheetHeader>
 
           <div className="space-y-4 py-6">
-            {cart.items.length === 0 ? (
+            {items.length === 0 ? (
               <div className="text-center py-8 text-gray-400">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Seu carrinho está vazio</p>
@@ -374,7 +416,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
               </div>
             ) : (
               <>
-                {cart.items.map((item) => (
+                {items.map((item) => (
                   <div key={`${item.id}-${item.size || 'unit'}`} className="p-4 rounded-lg border border-gray-700 bg-gray-800 hover:border-gray-600 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
@@ -389,7 +431,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
-                            onClick={() => cart.updateQuantity(item.id, item.quantity - 1, item.size)}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1, item.size)}
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -398,7 +440,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
-                            onClick={() => cart.updateQuantity(item.id, item.quantity + 1, item.size)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1, item.size)}
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
@@ -410,7 +452,7 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                          onClick={() => cart.removeItem(item.id, item.size)}
+                          onClick={() => removeItem(item.id, item.size)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -423,17 +465,17 @@ Forma de pagamento: ${cart.customerInfo.paymentMethod}
 
                 <div className="flex items-center justify-between text-lg font-bold text-white">
                   <span>Total:</span>
-                  <span className="text-green-500">R$ {cart.total.toFixed(2)}</span>
+                  <span className="text-green-500">R$ {total.toFixed(2)}</span>
                 </div>
               </>
             )}
           </div>
 
-          {cart.items.length > 0 && (
+          {items.length > 0 && (
             <SheetFooter className="flex flex-col gap-2">
               <Button 
                 variant="outline" 
-                onClick={cart.clearCart} 
+                onClick={clearCart} 
                 className="w-full bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
