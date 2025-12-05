@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"; 
-import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu, Pizza, Search } from "lucide-react";
+import { Instagram, MapPin, Clock, ShoppingCart, Percent, ChevronDown, Menu, Pizza, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { MenuSection } from "./MenuSection";
 import { PromoModal } from "./PromoModal";
 import { MeioMeioModal } from "./MeioMeioModal";
 import { useCart } from "@/hooks/useCart";
-import { pizzasSalgadas, pizzasDoces, esfihasSalgadas, esfihasDoces, bebidas, promocoes } from "@/data/menu";
+import { pizzasSalgadas, pizzasDoces, esfihasSalgadas, esfihasDoces, bebidas, porcoes, promocoes } from "@/data/menu";
 
 export function PizzariaApp() {
   const [activeTab, setActiveTab] = useState("home");
@@ -59,8 +59,53 @@ export function PizzariaApp() {
     return hour >= 18 && hour < 24;
   };
 
-  const filterItems = (items: typeof pizzasSalgadas) =>
-    items.filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  // Função de busca inteligente
+  const filterItems = (items: typeof pizzasSalgadas) => {
+    if (!searchTerm.trim()) return items;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    const searchWords = searchLower.split(/\s+/);
+    
+    return items.filter((item) => {
+      const itemName = item.name.toLowerCase();
+      const itemDescription = item.description?.toLowerCase() || "";
+      
+      return searchWords.every(searchWord => {
+        const allWords = `${itemName} ${itemDescription}`.split(/\s+/);
+        return allWords.some(word => 
+          word.startsWith(searchWord) || 
+          word === searchWord || 
+          (searchWord.length >= 3 && word.includes(searchWord))
+        );
+      });
+    });
+  };
+
+  // Função de busca para porções (usa PorcaoItem)
+  const filterPorcoes = (items: typeof porcoes) => {
+    if (!searchTerm.trim()) return items;
+    
+    const searchLower = searchTerm.toLowerCase().trim();
+    const searchWords = searchLower.split(/\s+/);
+    
+    return items.filter((item) => {
+      const itemName = item.name.toLowerCase();
+      const itemDescription = item.description?.toLowerCase() || "";
+      
+      return searchWords.every(searchWord => {
+        const allWords = `${itemName} ${itemDescription}`.split(/\s+/);
+        return allWords.some(word => 
+          word.startsWith(searchWord) || 
+          word === searchWord || 
+          (searchWord.length >= 3 && word.includes(searchWord))
+        );
+      });
+    });
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -148,6 +193,18 @@ export function PizzariaApp() {
 
   const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
+  // Contadores de resultados
+  const filteredPizzasSalgadas = filterItems(pizzasSalgadas);
+  const filteredPizzasDoces = filterItems(pizzasDoces);
+  const filteredEsfihasSalgadas = filterItems(esfihasSalgadas);
+  const filteredEsfihasDoces = filterItems(esfihasDoces);
+  const filteredBebidas = filterItems(bebidas);
+  const filteredPorcoes = filterPorcoes(porcoes);
+  
+  const totalResults = filteredPizzasSalgadas.length + filteredPizzasDoces.length + 
+                       filteredEsfihasSalgadas.length + filteredEsfihasDoces.length + 
+                       filteredBebidas.length + filteredPorcoes.length;
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <DeliveryAlert />
@@ -194,7 +251,6 @@ export function PizzariaApp() {
           </div>
         )}
 
-        {/* Badge Aberto/Fechado - dentro do header */}
         <div className="bg-gray-800 py-2 text-center border-t border-gray-700">
           <Badge className={`px-3 py-2 rounded text-sm ${isOpen() ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
             <Clock className="h-4 w-4 mr-2 inline" />{isOpen() ? "ABERTO" : "FECHADO"}
@@ -202,20 +258,41 @@ export function PizzariaApp() {
         </div>
       </header>
 
-      {/* Campo de busca FIXO */}
+      {/* Campo de busca FIXO - OTIMIZADO MOBILE */}
       {activeTab === "menu" && (
         <div className="sticky top-[121px] z-40 bg-gray-900 border-b border-gray-700 shadow-lg">
-          <div className="container mx-auto px-4 py-3">
+          <div className="container mx-auto px-3 sm:px-4 py-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Buscar pizza, esfiha, bebida..."
+                placeholder="Buscar pizza, esfiha, porção..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-12 py-3 sm:py-3 text-base rounded-lg border border-gray-700 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all touch-manipulation"
               />
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white active:text-pink-500 transition-colors p-1 touch-manipulation"
+                  aria-label="Limpar busca"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
+            
+            {searchTerm && (
+              <div className="mt-2 text-sm text-gray-400 text-center">
+                {totalResults === 0 ? (
+                  <span className="text-red-400">Nenhum resultado encontrado para "{searchTerm}"</span>
+                ) : (
+                  <span>
+                    {totalResults} {totalResults === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -225,7 +302,7 @@ export function PizzariaApp() {
         <section className="relative py-20 px-4 bg-gray-800 text-white text-center">
           <div className="container mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">PIZZARIA ALCAPONE</h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90">A melhor pizza da região! 🍕</p>
+            <p className="text-xl md:text-2xl mb-8 opacity-90">A melhor pizza da região!</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button variant="hero" size="xl" onClick={() => setActiveTab("menu")}>Ver Cardápio</Button>
               <Button variant="secondary" size="xl" onClick={openInstagram}><Instagram className="h-5 w-5 mr-2" />Siga-nos</Button>
@@ -263,18 +340,19 @@ export function PizzariaApp() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56 bg-background border shadow-lg z-50">
-                <DropdownMenuItem onClick={() => scrollToSection("pizzas-salgadas")}>🍕 Pizzas Salgadas</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("pizzas-doces")}>🍰 Pizzas Doces</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("esfihas-salgadas")}>🥟 Esfihas Salgadas</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("esfihas-doces")}>🧁 Esfihas Doces</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection("bebidas")}>🥤 Bebidas</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("pizzas-salgadas")}>Pizzas Salgadas</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("pizzas-doces")}>Pizzas Doces</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("esfihas-salgadas")}>Esfihas Salgadas</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("esfihas-doces")}>Esfihas Doces</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("porcoes")}>Porções</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => scrollToSection("bebidas")}>Bebidas</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             <Button 
               onClick={() => setPromoOpen(true)}
               className="whitespace-nowrap bg-red-600 hover:bg-red-700 text-white font-semibold"
             >
-                PROMOÇÕES
+              PROMOÇÕES
             </Button>
           </div>
         </div>
@@ -284,7 +362,6 @@ export function PizzariaApp() {
       <main className="container mx-auto px-4 py-8">
         {activeTab === "menu" && (
           <div className="space-y-8">
-            {/* Botão Meio a Meio */}
             <div className="flex justify-center">
               <Button
                 onClick={() => setMeioMeioOpen(true)}
@@ -296,21 +373,102 @@ export function PizzariaApp() {
               </Button>
             </div>
 
-            <div id="pizzas-salgadas"><MenuSection title="🍕 Pizzas Salgadas" items={filterItems(pizzasSalgadas)} category="pizza-salgada" onAddToCart={cart.addItem} hasSizes /></div>
-            <div id="pizzas-doces"><MenuSection title="🍰 Pizzas Doces" items={filterItems(pizzasDoces)} category="pizza-doce" onAddToCart={cart.addItem} hasSizes /></div>
-            <div id="esfihas-salgadas"><MenuSection title="🥟 Esfihas Salgadas" items={filterItems(esfihasSalgadas)} category="esfiha-salgada" onAddToCart={cart.addItem} /></div>
-            <div id="esfihas-doces"><MenuSection title="🧁 Esfihas Doces" items={filterItems(esfihasDoces)} category="esfiha-doce" onAddToCart={cart.addItem} /></div>
-            <div id="bebidas"><MenuSection title="🥤 Bebidas" items={filterItems(bebidas)} category="bebida" onAddToCart={cart.addItem} /></div>
+            {(!searchTerm || filteredPizzasSalgadas.length > 0) && (
+              <div id="pizzas-salgadas">
+                <MenuSection 
+                  title="Pizzas Salgadas" 
+                  items={filteredPizzasSalgadas} 
+                  category="pizza-salgada" 
+                  onAddToCart={cart.addItem} 
+                  hasSizes 
+                />
+              </div>
+            )}
+            
+            {(!searchTerm || filteredPizzasDoces.length > 0) && (
+              <div id="pizzas-doces">
+                <MenuSection 
+                  title="Pizzas Doces" 
+                  items={filteredPizzasDoces} 
+                  category="pizza-doce" 
+                  onAddToCart={cart.addItem} 
+                  hasSizes 
+                />
+              </div>
+            )}
+            
+            {(!searchTerm || filteredEsfihasSalgadas.length > 0) && (
+              <div id="esfihas-salgadas">
+                <MenuSection 
+                  title="Esfihas Salgadas" 
+                  items={filteredEsfihasSalgadas} 
+                  category="esfiha-salgada" 
+                  onAddToCart={cart.addItem} 
+                />
+              </div>
+            )}
+            
+            {(!searchTerm || filteredEsfihasDoces.length > 0) && (
+              <div id="esfihas-doces">
+                <MenuSection 
+                  title="Esfihas Doces" 
+                  items={filteredEsfihasDoces} 
+                  category="esfiha-doce" 
+                  onAddToCart={cart.addItem} 
+                />
+              </div>
+            )}
+            
+            {(!searchTerm || filteredPorcoes.length > 0) && (
+              <div id="porcoes">
+                <MenuSection 
+                  title="Porções" 
+                  items={filteredPorcoes} 
+                  category="porcao" 
+                  onAddToCart={cart.addItem} 
+                />
+              </div>
+            )}
+            
+            {(!searchTerm || filteredBebidas.length > 0) && (
+              <div id="bebidas">
+                <MenuSection 
+                  title="Bebidas" 
+                  items={filteredBebidas} 
+                  category="bebida" 
+                  onAddToCart={cart.addItem} 
+                />
+              </div>
+            )}
+
+            {searchTerm && totalResults === 0 && (
+              <div className="text-center py-16">
+                <Search className="h-16 w-16 mx-auto mb-4 text-gray-600" />
+                <h3 className="text-xl font-semibold text-gray-400 mb-2">
+                  Nenhum resultado encontrado
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  Não encontramos itens para "{searchTerm}"
+                </p>
+                <Button 
+                  onClick={clearSearch}
+                  variant="outline"
+                  className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                >
+                  Limpar busca
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </main>
 
-      {/* Floating Pizza Button */}
+      {/* Floating Pizza Button - OTIMIZADO MOBILE */}
       <Button
         variant="floating"
         onClick={handleClick}
         size="pizza"
-        className="relative"
+        className="relative shadow-2xl"
         style={{
           position: "fixed",
           left: cartBtnPos.left,
@@ -318,6 +476,8 @@ export function PizzariaApp() {
           zIndex: 50,
           cursor: draggingRef.current ? "grabbing" : "grab",
           touchAction: "none",
+          minWidth: "64px",
+          minHeight: "64px",
         }}
         onPointerDown={(e) => {
           btnRef.current = e.currentTarget as unknown as HTMLElement;
@@ -325,15 +485,14 @@ export function PizzariaApp() {
         }}
         aria-label="Abrir carrinho"
       >
-        <span className="text-xl">🍕</span>
+        <span className="text-2xl sm:text-3xl">🍕</span>
         {cartCount > 0 && (
-          <span className="absolute -top-2 -right-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+          <span className="absolute -top-2 -right-2 inline-flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-red-600 text-xs sm:text-sm font-bold text-white border-2 border-gray-900 shadow-lg">
             {cartCount}
           </span>
         )}
       </Button>
 
-      {/* Cart com props individuais */}
       <Cart 
         open={cartOpen} 
         onOpenChange={setCartOpen}

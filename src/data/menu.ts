@@ -9,6 +9,18 @@ export interface MenuItem {
   };
 }
 
+export interface PorcaoItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  servings?: string;
+  accompaniments?: {
+    included?: string[];
+    optional?: string[];
+  };
+}
+
 export const pizzasSalgadas: MenuItem[] = [
   { id: "americana", name: "AMERICANA", description: "Chicharro ralado, palmito, ervilhas cob. com mussarela", prices: { broto: 39.99, grande: 49.99 } },
   { id: "alcapone", name: "ALCAPONE", description: "Mussarela, polenguinho e parmesão", prices: { broto: 41.99, grande: 51.99 } },
@@ -52,248 +64,46 @@ export const pizzasSalgadas: MenuItem[] = [
   { id: "hot-dog", name: "HOT DOG", description: "Molho, mussarela, salsicha, mostarda e batata chips", prices: { broto: 41.99, grande: 51.99 } },
   { id: "favorita", name: "FAVORITA", description: "Frango, milho, mussarela e bacon", prices: { broto: 41.99, grande: 51.99 } },
   { id: "fascinante", name: "FASCINANTE", description: "Frango, bacon, tomate e catupiry", prices: { broto: 41.99, grande: 51.99 } },
-  {
-  id: "havaiana",
-  name: "HAVAIANA",
-  description: "Peito de frango desfiado, mussarela e rodelas de tomate",
-  prices: { broto: 41.99, grande: 51.99 }
-},
-{
-  id: "italiana",
-  name: "ITALIANA",
-  description: "Presunto picado, palmito, catupiry e mussarela",
-  prices: { broto: 38.99, grande: 48.99 }
-},
-{
-  id: "joao-paulo",
-  name: "JOÃO PAULO",
-  description: "Escarola, ovos, palmito, bacon e parmesão",
-  prices: { broto: 39.99, grande: 49.99 }
-},
-{
-  id: "lainne",
-  name: "LAINNE",
-  description: "Atum, cheddar e bacon",
-  prices: { broto: 39.99, grande: 49.99 }
-},
-{
-  id: "lombo",
-  name: "LOMBO",
-  description: "Lombo canadense, cebola e catupiry",
-  prices: { broto: 38.99, grande: 48.99 }
-},
-{
-  id: "margherita",
-  name: "MARGHERITA",
-  description: "Mussarela, tomate em fatias e manjericão",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "mafiosa",
-  name: "MAFIOSA",
-  description: "Lombo, calabresa, mussarela e bacon",
-  prices: { broto: 39.99, grande: 49.99 }
-},
-{
-  id: "mexicana",
-  name: "MEXICANA",
-  description: "Carne moída, tomate, cebola, mussarela e molho de pimenta",
-  prices: { broto: 42.99, grande: 52.99 }
-},
-{
-  id: "milho-verde-1",
-  name: "MILHO VERDE 1",
-  description: "Milho verde coberto com mussarela",
-  prices: { broto: 35.99, grande: 45.99 }
-},
-{
-  id: "milho-verde-2",
-  name: "MILHO VERDE 2",
-  description: "Milho verde coberto com catupiry",
-  prices: { broto: 35.99, grande: 45.99 }
-},
-{
-  id: "mista",
-  name: "MISTA",
-  description: "Mussarela e calabresa fatiada",
-  prices: { broto: 36.99, grande: 46.99 }
-},
-{
-  id: "moda-da-casa",
-  name: "MODA DA CASA",
-  description: "Presunto picado, azeitonas verdes picadas e mussarela",
-  prices: { broto: 38.99, grande: 48.99 }
-},
-{
-  id: "mussarela",
-  name: "MUSSARELA",
-  description: "Mussarela",
-  prices: { broto: 34.99, grande: 44.99 }
-},
-{
-  id: "mussarela-com-tomate",
-  name: "MUSSARELA COM TOMATE",
-  description: "Mussarela e rodelas de tomate",
-  prices: { broto: 36.99, grande: 46.99 }
-},
-{
-  id: "namorados",
-  name: "NAMORADOS",
-  description: "Palmito, catupiry e mussarela",
-  prices: { broto: 36.99, grande: 46.99 }
-},
-{
-  id: "napolitana",
-  name: "NAPOLITANA",
-  description: "Mussarela, tomate em fatias e parmesão",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "palmito-1",
-  name: "PALMITO 1",
-  description: "Palmito e cebola coberto com mussarela",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "palmito-2",
-  name: "PALMITO 2",
-  description: "Palmito coberto com catupiry",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "paleta",
-  name: "PALETA",
-  description: "Frango com catupiry e batata palha",
-  prices: { broto: 39.99, grande: 49.99 }
-},
-{
-  id: "salame",
-  name: "SALAME",
-  description: "Mussarela com fatias de salame",
-  prices: { broto: 39.99, grande: 49.99 }
-},
-{
-  id: "pepperoni",
-  name: "PEPPERONI",
-  description: "Pepperoni e mussarela",
-  prices: { broto: 47.99, grande: 57.99 }
-},
-{
-  id: "peruana",
-  name: "PERUANA",
-  description: "Atum, ervilha, palmito, ovo, cebola e mussarela",
-  prices: { broto: 43.99, grande: 53.99 }
-},
-{
-  id: "portuguesa-1",
-  name: "PORTUGUESA 1",
-  description: "Mussarela, presunto, cebola, ervilhas e ovos cozidos",
-  prices: { broto: 38.99, grande: 48.99 }
-},
-{
-  id: "portuguesa-2",
-  name: "PORTUGUESA 2",
-  description: "Mussarela, presunto, cebola, milho e ovos cozidos",
-  prices: { broto: 38.99, grande: 48.99 }
-},
-{
-  id: "presunto",
-  name: "PRESUNTO",
-  description: "Presunto, champignon e mussarela",
-  prices: { broto: 36.99, grande: 46.99 }
-},
-{
-  id: "primavera",
-  name: "PRIMAVERA",
-  description: "Mussarela, presunto, bacon, cebola, tomate seco, parmesão e champignon",
-  prices: { broto: 49.99, grande: 59.99 }
-},
-{
-  id: "provolone",
-  name: "PROVOLONE",
-  description: "Queijo provolone",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "paulista",
-  name: "PAULISTA",
-  description: "Calabresa, bacon e mussarela",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "quatro-queijos",
-  name: "QUATRO QUEIJOS",
-  description: "Mussarela, catupiry, provolone e parmesão",
-  prices: { broto: 47.99, grande: 57.99 }
-},
-{
-  id: "rafhael",
-  name: "RAFHAEL",
-  description: "Calabresa moída picante e mussarela",
-  prices: { broto: 36.99, grande: 46.99 }
-},
-{
-  id: "romana",
-  name: "ROMANA",
-  description: "Mussarela, rodelas de tomate, filés de aliche e parmesão",
-  prices: { broto: 49.99, grande: 49.99 }
-},
-{
-  id: "saborosa",
-  name: "SABOROSA",
-  description: "Mussarela, presunto, calabresa, bacon, rodelas de tomate e cebola",
-  prices: { broto: 46.99, grande: 56.99 }
-},
-{
-  id: "toscana",
-  name: "TOSCANA",
-  description: "Linguiça toscana moída coberta com mussarela",
-  prices: { broto: 36.99, grande: 46.99 }
-},
-{
-  id: "tres-queijos",
-  name: "TRÊS QUEIJOS",
-  description: "Mussarela, catupiry e parmesão",
-  prices: { broto: 42.99, grande: 52.99 }
-},
-{
-  id: "zairon",
-  name: "ZAIRON",
-  description: "Calabresa, mussarela e cheddar",
-  prices: { broto: 38.99, grande: 48.99 }
-},
-{
-  id: "zairon-il",
-  name: "ZAIRON IL",
-  description: "Frango, mussarela e cheddar",
-  prices: { broto: 41.99, grande: 51.99 }
-},
-{
-  id: "predileta",
-  name: "PREDILETA",
-  description: "Peito de peru, catupiry e parmesão",
-  prices: { broto: 44.99, grande: 54.99 }
-},
-{
-  id: "la-mafia",
-  name: "LA MAFIA",
-  description: "Peito de peru, palmito, ovo, milho, mussarela e bacon",
-  prices: { broto: 44.99, grande: 54.99 }
-},
-{
-  id: "mista-acebolada",
-  name: "MISTA ACEBOLADA",
-  description: "Calabresa, cebola e mussarela",
-  prices: { broto: 37.99, grande: 47.99 }
-},
-{
-  id: "chefe",
-  name: "CHEFE",
-  description: "Carne seca, catupiry, tomate e parmesão",
-  prices: { broto: 0.0, grande: 0.0 } // preços não informados, ajustar depois
-}
-
-
+  { id: "havaiana", name: "HAVAIANA", description: "Peito de frango desfiado, mussarela e rodelas de tomate", prices: { broto: 41.99, grande: 51.99 } },
+  { id: "italiana", name: "ITALIANA", description: "Presunto picado, palmito, catupiry e mussarela", prices: { broto: 38.99, grande: 48.99 } },
+  { id: "joao-paulo", name: "JOÃO PAULO", description: "Escarola, ovos, palmito, bacon e parmesão", prices: { broto: 39.99, grande: 49.99 } },
+  { id: "lainne", name: "LAINNE", description: "Atum, cheddar e bacon", prices: { broto: 39.99, grande: 49.99 } },
+  { id: "lombo", name: "LOMBO", description: "Lombo canadense, cebola e catupiry", prices: { broto: 38.99, grande: 48.99 } },
+  { id: "margherita", name: "MARGHERITA", description: "Mussarela, tomate em fatias e manjericão", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "mafiosa", name: "MAFIOSA", description: "Lombo, calabresa, mussarela e bacon", prices: { broto: 39.99, grande: 49.99 } },
+  { id: "mexicana", name: "MEXICANA", description: "Carne moída, tomate, cebola, mussarela e molho de pimenta", prices: { broto: 42.99, grande: 52.99 } },
+  { id: "milho-verde-1", name: "MILHO VERDE 1", description: "Milho verde coberto com mussarela", prices: { broto: 35.99, grande: 45.99 } },
+  { id: "milho-verde-2", name: "MILHO VERDE 2", description: "Milho verde coberto com catupiry", prices: { broto: 35.99, grande: 45.99 } },
+  { id: "mista", name: "MISTA", description: "Mussarela e calabresa fatiada", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "moda-da-casa", name: "MODA DA CASA", description: "Presunto picado, azeitonas verdes picadas e mussarela", prices: { broto: 38.99, grande: 48.99 } },
+  { id: "mussarela", name: "MUSSARELA", description: "Mussarela", prices: { broto: 34.99, grande: 44.99 } },
+  { id: "mussarela-com-tomate", name: "MUSSARELA COM TOMATE", description: "Mussarela e rodelas de tomate", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "namorados", name: "NAMORADOS", description: "Palmito, catupiry e mussarela", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "napolitana", name: "NAPOLITANA", description: "Mussarela, tomate em fatias e parmesão", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "palmito-1", name: "PALMITO 1", description: "Palmito e cebola coberto com mussarela", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "palmito-2", name: "PALMITO 2", description: "Palmito coberto com catupiry", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "paleta", name: "PALETA", description: "Frango com catupiry e batata palha", prices: { broto: 39.99, grande: 49.99 } },
+  { id: "salame", name: "SALAME", description: "Mussarela com fatias de salame", prices: { broto: 39.99, grande: 49.99 } },
+  { id: "pepperoni", name: "PEPPERONI", description: "Pepperoni e mussarela", prices: { broto: 47.99, grande: 57.99 } },
+  { id: "peruana", name: "PERUANA", description: "Atum, ervilha, palmito, ovo, cebola e mussarela", prices: { broto: 43.99, grande: 53.99 } },
+  { id: "portuguesa-1", name: "PORTUGUESA 1", description: "Mussarela, presunto, cebola, ervilhas e ovos cozidos", prices: { broto: 38.99, grande: 48.99 } },
+  { id: "portuguesa-2", name: "PORTUGUESA 2", description: "Mussarela, presunto, cebola, milho e ovos cozidos", prices: { broto: 38.99, grande: 48.99 } },
+  { id: "presunto", name: "PRESUNTO", description: "Presunto, champignon e mussarela", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "primavera", name: "PRIMAVERA", description: "Mussarela, presunto, bacon, cebola, tomate seco, parmesão e champignon", prices: { broto: 49.99, grande: 59.99 } },
+  { id: "provolone", name: "PROVOLONE", description: "Queijo provolone", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "paulista", name: "PAULISTA", description: "Calabresa, bacon e mussarela", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "quatro-queijos", name: "QUATRO QUEIJOS", description: "Mussarela, catupiry, provolone e parmesão", prices: { broto: 47.99, grande: 57.99 } },
+  { id: "rafhael", name: "RAFHAEL", description: "Calabresa moída picante e mussarela", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "romana", name: "ROMANA", description: "Mussarela, rodelas de tomate, filés de aliche e parmesão", prices: { broto: 49.99, grande: 49.99 } },
+  { id: "saborosa", name: "SABOROSA", description: "Mussarela, presunto, calabresa, bacon, rodelas de tomate e cebola", prices: { broto: 46.99, grande: 56.99 } },
+  { id: "toscana", name: "TOSCANA", description: "Linguiça toscana moída coberta com mussarela", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "tres-queijos", name: "TRÊS QUEIJOS", description: "Mussarela, catupiry e parmesão", prices: { broto: 42.99, grande: 52.99 } },
+  { id: "zairon", name: "ZAIRON", description: "Calabresa, mussarela e cheddar", prices: { broto: 38.99, grande: 48.99 } },
+  { id: "zairon-il", name: "ZAIRON IL", description: "Frango, mussarela e cheddar", prices: { broto: 41.99, grande: 51.99 } },
+  { id: "predileta", name: "PREDILETA", description: "Peito de peru, catupiry e parmesão", prices: { broto: 44.99, grande: 54.99 } },
+  { id: "la-mafia", name: "LA MAFIA", description: "Peito de peru, palmito, ovo, milho, mussarela e bacon", prices: { broto: 44.99, grande: 54.99 } },
+  { id: "mista-acebolada", name: "MISTA ACEBOLADA", description: "Calabresa, cebola e mussarela", prices: { broto: 37.99, grande: 47.99 } },
+  { id: "chefe", name: "CHEFE", description: "Carne seca, catupiry, tomate e parmesão", prices: { broto: 0.0, grande: 0.0 } }
 ];
 
 export const pizzasDoces: MenuItem[] = [
@@ -309,7 +119,7 @@ export const pizzasDoces: MenuItem[] = [
   { id: "ouro-branco", name: "OURO BRANCO", description: "Chocolate e bombom Ouro Branco", prices: { broto: 36.99, grande: 46.99 } },
   { id: "chocolate-branco", name: "CHOCOLATE BRANCO", description: "Chocolate ao leite branco", prices: { broto: 36.99, grande: 46.99 } },
   { id: "mix-chocolate", name: "MIX CHOCOLATE BRANCO E PRETO", description: "Chocolate ao leite preto e branco", prices: { broto: 36.99, grande: 46.99 } },
-  { id: "docinho", name: "DOCINHO", description: "Doce de leite com coco", prices: { broto: 36.99, grande: 46.99 } },
+  { id: "docinho", name: "DOCINHO", description: "Doce de leite com coco", prices: { broto: 36.99, grande: 46.99 } }
 ];
 
 export const esfihasSalgadas: MenuItem[] = [
@@ -350,7 +160,7 @@ export const esfihasSalgadas: MenuItem[] = [
   { id: "esf-carne-seca-cheddar", name: "CARNE SECA COM CHEDDAR", prices: { unit: 8.00 } },
   { id: "esf-catupiry", name: "CATUPIRY", prices: { unit: 8.00 } },
   { id: "esf-milho-catupiry", name: "MILHO COM CATUPIRY", prices: { unit: 8.00 } },
-  { id: "esf-brocolis-catupiry", name: "BRÓCOLIS COM CATUPIRY", prices: { unit: 8.00 } },
+  { id: "esf-brocolis-catupiry", name: "BRÓCOLIS COM CATUPIRY", prices: { unit: 8.00 } }
 ];
 
 export const esfihasDoces: MenuItem[] = [
@@ -365,15 +175,58 @@ export const esfihasDoces: MenuItem[] = [
   { id: "esf-d-chocolate-branco", name: "CHOCOLATE BRANCO", prices: { unit: 8.00 } },
   { id: "esf-d-banana-chocolate", name: "BANANA COM CHOCOLATE", prices: { unit: 8.00 } },
   { id: "esf-d-mix-chocolate", name: "MIX CHOCOLATE PRETO E BRANCO", prices: { unit: 8.00 } },
-  { id: "esf-d-docinho", name: "DOCINHO (DOCE DE LEITE COM COCO)", prices: { unit: 8.00 } },
+  { id: "esf-d-docinho", name: "DOCINHO (DOCE DE LEITE COM COCO)", prices: { unit: 8.00 } }
+];
+
+export const porcoes: PorcaoItem[] = [
+  {
+    id: "porc-frango-passarinho",
+    name: "FRANGO À PASSARINHO",
+    price: 40.00,
+    servings: "Serve 2 pessoas"
+  },
+  {
+    id: "porc-batata-simples",
+    name: "BATATA SIMPLES",
+    price: 30.00
+  },
+  {
+    id: "porc-batata-completa",
+    name: "BATATA COMPLETA",
+    description: "Escolha o acompanhamento",
+    price: 40.00,
+    servings: "Serve 2 pessoas",
+    accompaniments: {
+      included: ["Mussarela", "Bacon"],
+      optional: ["Cheddar", "Catupiry"]
+    }
+  },
+  {
+    id: "porc-polenta-simples",
+    name: "POLENTA SIMPLES",
+    price: 35.00
+  },
+  {
+    id: "porc-polenta-completa",
+    name: "POLENTA COMPLETA",
+    description: "Escolha o acompanhamento",
+    price: 45.00,
+    servings: "Serve 2 pessoas",
+    accompaniments: {
+      included: ["Mussarela", "Bacon"],
+      optional: ["Cheddar", "Catupiry"]
+    }
+  }
 ];
 
 export const bebidas: MenuItem[] = [
   { id: "dolly", name: "DOLLY", prices: { unit: 8.00 } },
   { id: "coca", name: "COCA-COLA", prices: { unit: 8.00 } },
   { id: "fanta", name: "FANTA", prices: { unit: 8.00 } },
-  { id: "guarana", name: "GUARANÁ ANTÁRTICA", prices: { unit: 8.00 } },
+  { id: "guarana", name: "GUARANÁ ANTÁRTICA", prices: { unit: 8.00 } }
 ];
+
+// ... (promocoes)
 
 export const promocoes = [
   {
@@ -384,7 +237,7 @@ export const promocoes = [
     items: ["5x Carne", "5x Queijo", "5x Calabresa"]
   },
   {
-    id: "promo2", 
+    id: "promo2",
     name: "PACOTE 2",
     description: "10 Carne + 5 Queijo + 5 Toscana + 2 Frango com Catupiry",
     price: 66.00,
@@ -392,7 +245,7 @@ export const promocoes = [
   },
   {
     id: "promo3",
-    name: "PACOTE 3", 
+    name: "PACOTE 3",
     description: "12 Frango com Catupiry + Carne + Queijo + Calabresa + Atum",
     price: 75.00,
     items: ["12x Frango com Catupiry", "Carne", "Queijo", "Calabresa", "Atum"]

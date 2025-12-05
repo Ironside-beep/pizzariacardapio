@@ -215,7 +215,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
 
           <div className="bg-pink-500/10 rounded-lg p-4 border border-pink-500/30">
             <p className="text-center text-sm text-pink-200">
-              🍕 Seu carrinho está salvo! Volte no horário de funcionamento para finalizar seu pedido.
+              Seu carrinho está salvo! Volte no horário de funcionamento para finalizar seu pedido.
             </p>
           </div>
         </div>
@@ -279,7 +279,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                       value={customerInfo.name}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
                       placeholder="Seu nome completo"
-                      className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                      className="bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
                     />
                   </div>
                   <div>
@@ -289,7 +289,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                       value={customerInfo.phone}
                       onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
                       placeholder="(11) 99999-9999"
-                      className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                      className="bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
                     />
                   </div>
                 </div>
@@ -305,7 +305,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                           value={customerInfo.address}
                           onChange={(e) => setCustomerInfo({ ...customerInfo, address: e.target.value })}
                           placeholder="Rua, Avenida..."
-                          className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                          className="bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
                         />
                       </div>
                       <div>
@@ -315,7 +315,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                           value={customerInfo.number}
                           onChange={(e) => setCustomerInfo({ ...customerInfo, number: e.target.value })}
                           placeholder="123"
-                          className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                          className="bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
                         />
                       </div>
                     </div>
@@ -327,7 +327,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                         value={customerInfo.neighborhood}
                         onChange={(e) => setCustomerInfo({ ...customerInfo, neighborhood: e.target.value })}
                         placeholder="Nome do bairro"
-                        className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                        className="bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all"
                       />
                     </div>
                   </>
@@ -341,7 +341,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                       setCustomerInfo({ ...customerInfo, paymentMethod: value })
                     }
                   >
-                    <SelectTrigger className="bg-gray-800 text-white border-gray-700">
+                    <SelectTrigger className="bg-gray-800 text-white border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all">
                       <SelectValue className="text-white"/>
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 text-white border-gray-700">
@@ -361,7 +361,7 @@ Forma de pagamento: ${customerInfo.paymentMethod}
                     onChange={(e) => setCustomerInfo({ ...customerInfo, observations: e.target.value })}
                     placeholder="Observações adicionais (opcional)"
                     rows={3}
-                    className="bg-gray-800 text-white placeholder-gray-400 border-gray-700"
+                    className="bg-gray-800 text-white placeholder-gray-400 border-gray-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all resize-none"
                   />
                 </div>
               </div>

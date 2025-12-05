@@ -188,4 +188,43 @@ All colors MUST be HSL.
     from { box-shadow: 0 0 20px hsl(var(--primary) / 0.4); }
     to { box-shadow: 0 0 30px hsl(var(--primary) / 0.7); }
   }
+
+  /* ===== ESTILOS PADRONIZADOS PARA INPUTS ===== */
+  
+  /* Remove estilos padrão do navegador */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none !important;
+  }
+
+  /* Estilos de focus padronizados e limpos */
+  input:focus,
+  textarea:focus {
+    outline: none !important;
+    border-color: rgb(236 72 153) !important;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15) !important;
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Estilos específicos para inputs do carrinho */
+  .bg-gray-800:is(input, textarea):focus {
+    background-color: rgb(31 41 55) !important;
+    border-color: rgb(236 72 153) !important;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15) !important;
+  }
+
+  /* Remove qualquer borda/outline vermelho ou branco indesejado */
+  input:invalid:focus,
+  textarea:invalid:focus {
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15) !important;
+  }
+
+  /* Padronização para Select (dropdown) */
+  [role="combobox"]:focus,
+  [role="combobox"]:focus-visible {
+    outline: none !important;
+    border-color: rgb(236 72 153) !important;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15) !important;
+  }
 }
