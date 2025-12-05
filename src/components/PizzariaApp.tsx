@@ -44,10 +44,21 @@ export function PizzariaApp() {
   const scrollToSection = (sectionId: string) => {
     setActiveTab("menu");
     setActiveSection(sectionId);
+    
+    // Aumenta o delay e adiciona offset para mobile
     setTimeout(() => {
       const element = document.getElementById(sectionId);
-      if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+      if (element) {
+        const headerOffset = 180; // Altura do header + busca
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+    }, 300);
   };
 
   const isOpen = () => {
@@ -127,6 +138,16 @@ export function PizzariaApp() {
   useEffect(() => {
     posRef.current = cartBtnPos;
   }, [cartBtnPos]);
+
+  // Previne scroll automático indesejado
+  useEffect(() => {
+    if (activeSection) {
+      const timer = setTimeout(() => {
+        setActiveSection(null);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSection]);
 
   useEffect(() => {
     const DRAG_THRESHOLD = 8;
